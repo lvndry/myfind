@@ -22,7 +22,7 @@ int ls(char *path)
     while ((file = readdir(dir)) != NULL)
     {
         sprintf(filename, "%s/%s", path, file->d_name);
-        if (strcmp(file->d_name, "..") != 0)
+        if (strcmp(file->d_name, "..") != 0 && strcmp(file->d_name, ".") != 0)
         {
             stat(filename, &statbuff);
             if (S_ISDIR(statbuff.st_mode))
