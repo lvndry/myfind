@@ -12,7 +12,7 @@ void getFilename(char *filename, char*path, char *d_name)
     sprintf(filename, "%s/%s", path, d_name);
 }
 
-int is_valid_dir(char *path)
+int is_valid_name(char *path)
 {
     return (strcmp(path, ".") != 0 && strcmp(path, "..") != 0);
 }
@@ -22,9 +22,16 @@ int ls(char *path)
     DIR *dir = opendir(path);
     if (dir == NULL)
     {
-       // err(1, "%s", path);
-       printf("myfind: %s: %s\n", path, strerror(errno));
-       return 1;
+        if(access(path, F_OK) != -1 ) {
+            printf("%s\n", path);
+            return 1;
+        }
+        else
+        {
+            // err(1, "%s", path);
+            printf("myfind: %s: %s\n", path, strerror(errno));
+            return 1;
+        }
     }
 
     struct dirent *file;
@@ -40,7 +47,7 @@ int ls(char *path)
     while ((file = readdir(dir)) != NULL)
     {
         getFilename(filename, path, file->d_name);
-        if (is_valid_dir(file->d_name))
+        if (is_valid_name(file->d_name))
         {
             stat(filename, &statbuff);
             if (S_ISDIR(statbuff.st_mode))
