@@ -14,7 +14,7 @@ void getFilename(char *filename, char*path, char *d_name)
 
 int is_valid_dir(char *path)
 {
-    return (strcmp(path, "..") != 0 && strcmp(path, ".") != 0);
+    return (strcmp(path, ".") != 0 && strcmp(path, "..") != 0);
 }
 
 int ls(char *path)
@@ -61,9 +61,18 @@ int main(int argc, char **argv)
 {
     char *path;
     if (argc > 1)
-        path = argv[1];
+    {
+        for (int i = 1; i < argc; i++)
+        {
+            path = argv[i];
+            ls(argv[i]);
+        }
+    }
     else
+    {
         path = ".";
+        ls(path);
+    }
 
-    return ls(path);
+    return 0;
 }
