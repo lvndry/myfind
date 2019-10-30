@@ -5,12 +5,22 @@
 #include <string.h>
 #include <unistd.h>
 #include <err.h>
+#include<errno.h>
+
+int is_valid_dir(char *path)
+{
+    return (strcmp(path, "..") != 0 && strcmp(path, ".") != 0);
+}
 
 int ls(char *path)
-{
+{  
     DIR *dir = opendir(path);
     if (dir == NULL)
-        err(1,"%s", path);
+    {
+       // err(1, "%s", path);
+       printf("my find: %s: %s\n", path, strerror(errno));
+       return 1;
+    }
 
     struct dirent *file;
     struct stat statbuff;
@@ -22,7 +32,7 @@ int ls(char *path)
     while ((file = readdir(dir)) != NULL)
     {
         sprintf(filename, "%s/%s", path, file->d_name);
-        if (strcmp(file->d_name, "..") != 0 && strcmp(file->d_name, ".") != 0)
+        if (is_valid_dir(file->d_name))
         {
             stat(filename, &statbuff);
             if (S_ISDIR(statbuff.st_mode))
