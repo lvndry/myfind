@@ -7,6 +7,11 @@
 #include <err.h>
 #include<errno.h>
 
+void getFilename(char *filename, char*path, char *d_name)
+{
+    sprintf(filename, "%s/%s", path, d_name);
+}
+
 int is_valid_dir(char *path)
 {
     return (strcmp(path, "..") != 0 && strcmp(path, ".") != 0);
@@ -18,7 +23,7 @@ int ls(char *path)
     if (dir == NULL)
     {
        // err(1, "%s", path);
-       printf("my find: %s: %s\n", path, strerror(errno));
+       printf("myfind: %s: %s\n", path, strerror(errno));
        return 1;
     }
 
@@ -29,9 +34,12 @@ int ls(char *path)
     file = readdir(dir);
     printf("%s\n", path);
 
+    if (path[strlen(path) - 1] == '/')
+        path[strlen(path) - 1] = 0;
+
     while ((file = readdir(dir)) != NULL)
     {
-        sprintf(filename, "%s/%s", path, file->d_name);
+        getFilename(filename, path, file->d_name);
         if (is_valid_dir(file->d_name))
         {
             stat(filename, &statbuff);
