@@ -57,7 +57,18 @@ int setOptions(int count, char **vector)
             return i;
     }
 
-    return 0;
+    return 1;
+}
+
+int getPaths(int start, int argc, char **argv)
+{
+    for (int i = start; i < argc; i++)
+    {
+        if (argv[i][0] == '-')
+            return i;
+    }
+
+    return argc;
 }
 
 void getFilename(char *filename, char*path, char *d_name)
@@ -76,14 +87,9 @@ int ls(char *path)
     if (dir == NULL)
     {
         if(access(path, F_OK) != -1)
-        {
             printf("%s\n", path);
-        }
         else
-        {
-            // err(1, "%s", path);
             printf("myfind: %s: %s\n", path, strerror(errno));
-        }
 
         return 1;
     }
@@ -124,15 +130,14 @@ int ls(char *path)
 int main(int argc, char **argv)
 {
     char *path;
-    setOptions(argc, argv);
+    int optend = setOptions(argc, argv);
+    int pathend = getPaths(optend, argc, argv);
+    printf("%d\n", pathend);
 
-    if (argc > 1)
+    if (pathend - optend > 0)
     {
-        for (int i = 1; i < argc; i++)
-        {
-            path = argv[i];
+        for (int i = optend; i < pathend; i++)
             ls(argv[i]);
-        }
     }
     else
     {
