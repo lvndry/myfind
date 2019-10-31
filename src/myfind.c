@@ -10,9 +10,9 @@
 #include <getopt.h>
 
 struct opts_t {
+    int l;
     int d;
     int h;
-    int l;
     int p;
 };
 
@@ -26,18 +26,35 @@ int setOptions(int count, char **vector)
         if (option[0] != '-')
             return i;
         if (strcmp(vector[i], "-d") == 0)
-            options.l = 1;
-        if (strcmp(vector[i], "-L") == 0)
-        {
-            options.l = 1;
-            options.p = 0;
-        }
-        if (strcmp(vector[i], "-P") == 0)
         {
             options.l = 0;
+            options.d = 1;
+            options.h = 0;
+            options.p = 0;
         }
-        if (strcmp(vector[i], "-H") == 0)
+        else if (strcmp(vector[i], "-L") == 0)
+        {
+            options.l = 1;
+            options.d = 0;
+            options.p = 0;
+            options.h = 0;
+        }
+        else if (strcmp(vector[i], "-P") == 0)
+        {
+            options.l = 0;
+            options.d = 0;
+            options.h = 0;
+            options.p = 1;
+        }
+        else if (strcmp(vector[i], "-H") == 0)
+        {
+            options.l = 0;
+            options.d = 0;
             options.h = 1;
+            options.p = 0;
+        }
+        else
+            return i;
     }
 
     return 0;
