@@ -18,9 +18,9 @@ struct opts_t {
 
 struct opts_t options = { .d = 0, .h = 0, .l = 0, .p = 1 };
 
-int setOptions(int count, char **vector)
+int setOptions(int start, int end, char **vector)
 {
-    for (int i = 1; i < count; i++)
+    for (int i = start; i < end; i++)
     {
         char *option = vector[i];
         if (option[0] != '-')
@@ -57,7 +57,7 @@ int setOptions(int count, char **vector)
             return i;
     }
 
-    return 1;
+    return start;
 }
 
 int getPaths(int start, int argc, char **argv)
@@ -130,7 +130,7 @@ int ls(char *path)
 int main(int argc, char **argv)
 {
     char *path;
-    int optend = setOptions(argc, argv);
+    int optend = setOptions(1, argc, argv);
     int pathend = getPaths(optend, argc, argv);
     printf("%d\n", pathend);
 
