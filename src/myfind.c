@@ -146,14 +146,14 @@ int islink(char *path)
     return S_ISLNK(buff.st_mode);
 }
 
-void find(char *path)
+void myfind(char *path)
 {
     if (islink(path))
     {
-        if (options.h)
-            ls(path);
-        else
+        if (options.p)
             printf("%s\n", path);
+        else
+            ls(path);
     }
     else
         ls(path);
@@ -170,13 +170,13 @@ int main(int argc, char **argv)
         for (int i = optend + 1; i <= pathend; i++)
         {
             path = argv[i];
-            find(path);
+            myfind(path);
         }
     }
     else
     {
         path = ".";
-        find(path);
+        myfind(path);
     }
 
     return 0;
