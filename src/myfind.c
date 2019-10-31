@@ -8,6 +8,9 @@
 #include <err.h>
 #include <errno.h>
 #include <getopt.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <limits.h>
 
 struct opts_t {
     int l;
@@ -17,6 +20,7 @@ struct opts_t {
 };
 
 struct opts_t options = { .d = 0, .h = 0, .l = 0, .p = 1 };
+struct stat statbuff;
 
 int setOptions(int start, int end, char **vector)
 {
@@ -24,7 +28,7 @@ int setOptions(int start, int end, char **vector)
     {
         char *option = vector[i];
         if (option[0] != '-')
-            return i;
+            return i - 1;
         if (strcmp(vector[i], "-d") == 0)
         {
             options.l = 0;
@@ -67,8 +71,7 @@ int getPaths(int start, int argc, char **argv)
         if (argv[i][0] == '-')
             return i;
     }
-
-    return argc;
+    return argc - 1;
 }
 
 void getFilename(char *filename, char*path, char *d_name)
@@ -76,9 +79,23 @@ void getFilename(char *filename, char*path, char *d_name)
     sprintf(filename, "%s/%s", path, d_name);
 }
 
+void getStat(char *filename)
+{
+    if (options.l)
+        stat(filename, &statbuff);
+    else
+        lstat(filename, &statbuff);
+}
+
 int is_valid_name(char *path)
 {
     return (strcmp(path, ".") != 0 && strcmp(path, "..") != 0);
+}
+
+void format_path(char *path)
+{
+    if (path[strlen(path) - 1] == '/')
+        path[strlen(path) - 1] = '\0';
 }
 
 int ls(char *path)
@@ -89,13 +106,12 @@ int ls(char *path)
         if(access(path, F_OK) != -1)
             printf("%s\n", path);
         else
-            printf("myfind: %s: %s\n", path, strerror(errno));
+            fprintf(stderr, "myfind: %s: %s\n", path, strerror(errno));
 
         return 1;
     }
 
     struct dirent *file;
-    struct stat statbuff;
     char filename[1024];
 
     file = readdir(dir);
@@ -109,13 +125,9 @@ int ls(char *path)
         getFilename(filename, path, file->d_name);
         if (is_valid_name(file->d_name))
         {
-            if (options.l)
-                stat(filename, &statbuff);
-            else
-                lstat(filename, &statbuff);
+            getStat(filename);
             if (S_ISDIR(statbuff.st_mode))
             {
-                // printf("%s is a directory\n", filename);
                 ls(filename);
             }
             else
@@ -127,22 +139,44 @@ int ls(char *path)
     return closedir(dir);
 }
 
+int islink(char *path)
+{
+    struct stat buff;
+    lstat(path, &buff);
+    return S_ISLNK(buff.st_mode);
+}
+
+void find(char *path)
+{
+    if (islink(path))
+    {
+        if (options.h)
+            ls(path);
+        else
+            printf("%s\n", path);
+    }
+    else
+        ls(path);
+}
+
 int main(int argc, char **argv)
 {
     char *path;
     int optend = setOptions(1, argc, argv);
-    int pathend = getPaths(optend, argc, argv);
-    printf("%d\n", pathend);
+    int pathend = getPaths(optend + 1, argc, argv);
 
     if (pathend - optend > 0)
     {
-        for (int i = optend; i < pathend; i++)
-            ls(argv[i]);
+        for (int i = optend + 1; i <= pathend; i++)
+        {
+            path = argv[i];
+            find(path);
+        }
     }
     else
     {
         path = ".";
-        ls(path);
+        find(path);
     }
 
     return 0;
