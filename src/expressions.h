@@ -4,14 +4,14 @@
 struct expression
 {
     char *name;
-    int (*function)(char *path, int data);
+    int (*function)(char *path, void* data);
 };
 
-int is_newer(char *path, int timestamp);
-int print(char *path, int isFolder);
-int group_own(char *path, int gid);
-int user_own(char *path, int uid);
-int rm(char *path, int placeholder);
+int is_newer(char *path, unsigned int *timestamp);
+int print(char *path,  unsigned int *isFolder);
+int group_own(char *path, unsigned int *gid);
+int user_own(char *path, unsigned int *uid);
+int rm(char *path, unsigned int *placeholder);
 
 struct expression expressions[5] = {
     {

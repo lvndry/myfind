@@ -58,10 +58,10 @@ int setOptions(int start, int end, char **vector)
             options.p = 0;
         }
         else
-            return i;
+            return i - 1;
     }
 
-    return start;
+    return end - 1;
 }
 
 int getPaths(int start, int argc, char **argv)
@@ -99,7 +99,7 @@ void format_path(char *path)
 }
 
 int ls(char *path)
-{  
+{
     DIR *dir = opendir(path);
     if (dir == NULL)
     {
