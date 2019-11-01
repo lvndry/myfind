@@ -104,7 +104,10 @@ int ls(char *path)
     if (dir == NULL)
     {
         if(access(path, F_OK) != -1)
+        {
             printf("%s\n", path);
+            return 0;
+        }
         else
             fprintf(stderr, "myfind: %s: %s\n", path, strerror(errno));
 
