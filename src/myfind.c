@@ -69,7 +69,7 @@ int getPaths(int start, int argc, char **argv)
     for (int i = start; i < argc; i++)
     {
         if (argv[i][0] == '-')
-            return i;
+            return i - 1;
     }
     return argc - 1;
 }
@@ -167,6 +167,8 @@ int main(int argc, char **argv)
     char *path;
     int optend = setOptions(1, argc, argv);
     int pathend = getPaths(optend + 1, argc, argv);
+
+    printf("pathend %d - optend %d", pathend, optend);
 
     if (pathend - optend > 0)
     {
