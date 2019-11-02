@@ -103,7 +103,8 @@ int ls(char *path)
     DIR *dir = opendir(path);
     if (dir == NULL)
     {
-        if(access(path, F_OK) != -1)
+        printf("Could not open %s\n", path);
+        if(access(path, R_OK) != -1)
         {
             printf("%s\n", path);
             return 0;
@@ -115,16 +116,20 @@ int ls(char *path)
     }
 
     struct dirent *file;
-    char filename[1024];
+    char filename[PATH_MAX];
+
+    printf("%s\n", path);
 
     file = readdir(dir);
-    printf("%s\n", path);
+    if (file == NULL)
+        return 1;
 
     if (path[strlen(path) - 1] == '/')
         path[strlen(path) - 1] = '\0';
 
-    while ((file = readdir(dir)) != NULL)
+    do
     {
+        // printf("In folder: %s - file: %s\n", path, file->d_name);
         getFilename(filename, path, file->d_name);
         if (is_valid_name(file->d_name))
         {
@@ -138,7 +143,9 @@ int ls(char *path)
                 printf("%s\n", filename);
             }
         }
-    }
+        else
+            continue;
+    } while ((file = readdir(dir)) != NULL);
     return closedir(dir);
 }
 
@@ -168,7 +175,7 @@ int main(int argc, char **argv)
     int optend = setOptions(1, argc, argv);
     int pathend = getPaths(optend + 1, argc, argv);
 
-    printf("pathend %d - optend %d", pathend, optend);
+    // printf("pathend %d - optend %d\n", pathend, optend);
 
     if (pathend - optend > 0)
     {
