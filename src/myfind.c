@@ -12,7 +12,10 @@
 #include <stdlib.h>
 #include <limits.h>
 
-struct opts_t {
+// #include "parse.h"
+
+struct opts_t
+{
     int l;
     int d;
     int h;
@@ -74,9 +77,29 @@ int getPaths(int start, int argc, char **argv)
     return argc - 1;
 }
 
+/*
+void evaluationExpressions(char *argv[], int start, int end)
+{
+    for (int i = start; i < end; i++)
+    {
+        if (isOperand(argv[i]))
+        {
+            printf("%s is an operand\n", argv[i]);
+        }
+        else
+        {
+            printf("%s is not an operand\n", argv[i]);
+        }
+    }
+}
+*/
+
 void getFilename(char *filename, char*path, char *d_name)
 {
-    sprintf(filename, "%s/%s", path, d_name);
+    if (strcmp(path, "/") == 0)
+        sprintf(filename, "%s%s", path, d_name);
+    else
+        sprintf(filename, "%s/%s", path, d_name);
 }
 
 void getStat(char *filename)
@@ -103,33 +126,30 @@ int ls(char *path)
     DIR *dir = opendir(path);
     if (dir == NULL)
     {
-        printf("Could not open %s\n", path);
-        if(access(path, R_OK) != -1)
+        printf("%s\n", path);
+        if(access(path, R_OK) == -1)
         {
-            printf("%s\n", path);
-            return 0;
+            fprintf(stderr, "myfind: %s: %s\n", path, strerror(errno));
+            return 1;
         }
         else
-            fprintf(stderr, "myfind: %s: %s\n", path, strerror(errno));
-
-        return 1;
+            return 0;
     }
 
     struct dirent *file;
     char filename[PATH_MAX];
 
-    printf("%s\n", path);
+    if (!options.d)
+        printf("%s\n", path);
 
     file = readdir(dir);
     if (file == NULL)
+    {
+        printf("%s\n", path);
         return 1;
-
-    if (path[strlen(path) - 1] == '/')
-        path[strlen(path) - 1] = '\0';
-
+    }
     do
     {
-        // printf("In folder: %s - file: %s\n", path, file->d_name);
         getFilename(filename, path, file->d_name);
         if (is_valid_name(file->d_name))
         {
@@ -143,9 +163,11 @@ int ls(char *path)
                 printf("%s\n", filename);
             }
         }
-        else
-            continue;
     } while ((file = readdir(dir)) != NULL);
+
+    if (options.d)
+        printf("%s\n", path);
+
     return closedir(dir);
 }
 
@@ -174,7 +196,7 @@ int main(int argc, char **argv)
     char *path;
     int optend = setOptions(1, argc, argv);
     int pathend = getPaths(optend + 1, argc, argv);
-
+    // evaluationExpressions(argv, pathend, argc);
     // printf("pathend %d - optend %d\n", pathend, optend);
 
     if (pathend - optend > 0)

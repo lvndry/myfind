@@ -11,4 +11,4 @@ all: myfind
 $(BIN): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 clean:
-	$(RM) $(OBJ) $(BIN) *.swp
+	$(RM) $(OBJ) $(BIN) *.swp *.log
