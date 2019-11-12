@@ -1,18 +1,18 @@
 #define _GNU_SOURCE
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <dirent.h>
-#include <string.h>
-#include <unistd.h>
 #include <err.h>
 #include <errno.h>
-#include <getopt.h>
 #include <fcntl.h>
-#include <stdlib.h>
+#include <getopt.h>
 #include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
-// #include "parse.h"
+#include "parse.h"
 
 struct opts_t
 {
@@ -76,23 +76,6 @@ int getPaths(int start, int argc, char **argv)
     }
     return argc - 1;
 }
-
-/*
-void evaluationExpressions(char *argv[], int start, int end)
-{
-    for (int i = start; i < end; i++)
-    {
-        if (isOperand(argv[i]))
-        {
-            printf("%s is an operand\n", argv[i]);
-        }
-        else
-        {
-            printf("%s is not an operand\n", argv[i]);
-        }
-    }
-}
-*/
 
 void getFilename(char *filename, char*path, char *d_name)
 {
@@ -196,9 +179,8 @@ int main(int argc, char **argv)
     char *path;
     int optend = setOptions(1, argc, argv);
     int pathend = getPaths(optend + 1, argc, argv);
-    // evaluationExpressions(argv, pathend, argc);
-    // printf("pathend %d - optend %d\n", pathend, optend);
-
+    parse(argv, pathend + 1, argc);
+    return 1;
     if (pathend - optend > 0)
     {
         for (int i = optend + 1; i <= pathend; i++)

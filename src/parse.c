@@ -1,64 +1,71 @@
-#include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "parse.h"
 
-struct bintree *init(void)
-{
-    struct bintree *tree = malloc(sizeof(struct bintree));
-    tree->left = NULL;
-    tree->right = NULL;
+#define SIZE 50
+#define UNUSED(x) (void)(x)
 
-    return tree;
+struct expression parse_table[] = {
+    {"-name", parse_name},
+    {"(", parse_oparen},
+};
+
+struct token tokens[SIZE];
+int top = -1;
+
+void push(struct token token)
+{
+    tokens[++top] = token;
 }
 
-struct bintree *insert(char *exp)
+struct token pop()
 {
-    struct bintree *tree = malloc(sizeof(struct bintree));
-    tree->value = exp;
-    tree->left = NULL;
-    tree->right = NULL;
-
-    return tree;
+    return tokens[top--];
 }
 
-void remove(struct bintree *tree)
+int isOperand(const char *op)
 {
-    free(tree);
-    tree = NULL;
-}
-
-int isOperand(char *operand)
-{
-    for (int i = 0; operands_table[i].value != NULL; i++)
-    {
-        if (strcmp(operand, operands_table[i].value) == 0)
-            return 1;
-    }
+    if (strcmp("-o", op) == 0 || strcmp("-a", op) == 0)
+        return 1;
     return 0;
 }
 
-int parse_or(char *argv[])
+void parse(char *argv[], int start, int end)
 {
-    return argv[0][0];
+    int cursor = start;
+    int len = sizeof(parse_table) / sizeof(parse_table[0]);
+
+    while (cursor < end)
+    {
+        for (int i = 0; i < len; ++i)
+        {
+            if (strcmp(parse_table[i].value, argv[cursor]) == 0)
+            {
+                parse_table[i].func(argv, &cursor);
+            }
+        }
+        cursor++;
+    }
 }
 
-int parse_and(char *argv[])
+int parse_name(char *argv[], int* cursor)
 {
-    return argv[0][0];
+    printf("We got a %s expression and parameter is %s\n", argv[*cursor], argv[*cursor + 1]);
+    struct token token = { NAME, argv[*cursor + 1] };
+    push(token);
+    *cursor += 1;
+
+    return 1;
 }
 
-int parse_openp(char *argv[])
+int parse_oparen(char *argv[], int *cursor)
 {
-    return argv[0][0];
-}
+    UNUSED(argv);
+    UNUSED(cursor);
 
-int parse_closep(char *argv[])
-{
-    return argv[0][0];
-}
+    struct token token = { PAREN_O, NULL };
+    push(token);
 
-int parse_exclam(char *argv[])
-{
-    return argv[0][0];
+    return 1;
 }

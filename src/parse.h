@@ -1,37 +1,43 @@
-#ifndef PRS_H
-#define PRS_H
+#ifndef PARSE_H
+#define PARSE_H
 
-struct bintree
-{
+struct expression {
     char *value;
-    struct bintree *left;
-    struct bintree *right;
+    int (*func)(char *argv[], int* cursor);
 };
 
-struct operand
+enum token_type
 {
+    NAME,
+    TYPE,
+    NEWER,
+    PERM,
+    USER,
+    GROUP,
+
+    AND,
+    OR,
+    NOT,
+    PAREN_O,
+    PAREN_P,
+
+    EXEC,
+    EXECDIR,
+    EXECPLUS,
+    DELETE,
+    PRINT
+};
+
+struct token {
+    enum token_type type;
     char *value;
-    int (*function)(char *argv[]);
 };
 
-int parse_or(char *argv[]);
-int parse_and(char *argv[]);
-int parse_openp(char *argv[]);
-int parse_closep(char *argv[]);
-int parse_exclam(char *argv[]);
+void parse(char *argv[], int start, int end);
+int isOperand(const char *op);
 
-struct operand operands_table[] = {
-    {"o", parse_or},
-    {"a", parse_and},
-    {"(", parse_openp},
-    {")", parse_closep},
-    {"!", parse_exclam},
-    {"newer", parse_exclam},
-    {"exec", parse_exclam},
-    {"print", parse_exclam},
-    {0}
-};
-
-int isOperand(char *operand);
+// token parsing functions
+int parse_name(char *argv[], int* cursor);
+int parse_oparen(char *argv[], int* cursor);
 
 #endif
