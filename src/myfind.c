@@ -71,7 +71,7 @@ int getPaths(int start, int argc, char **argv)
 {
     for (int i = start; i < argc; i++)
     {
-        if (argv[i][0] == '-')
+        if (argv[i][0] == '-' || argv[i][0] == '!' || argv[i][0] == '(')
             return i - 1;
     }
     return argc - 1;
@@ -115,8 +115,7 @@ int ls(char *path)
             fprintf(stderr, "myfind: %s: %s\n", path, strerror(errno));
             return 1;
         }
-        else
-            return 0;
+        return 0;
     }
 
     struct dirent *file;

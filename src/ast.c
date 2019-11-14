@@ -5,25 +5,37 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <fnmatch.h>
 
 #include "ast.h"
 
 /* THIS IS PSEUDO CODE. DO NOT COMPILE */
 
-struct node *init(void* expression, enum node_type type)
+struct ast *create(struct token token)
 {
-    struct node *ast = malloc(sizeof(struct node));
+    struct ast *ast = malloc(sizeof(struct ast));
+
     ast->right = NULL;
     ast->left = NULL;
-    ast->value = expressions;
-    ast->type = type;
+    ast->token = token;
 
     return ast;
 }
 
-int evaluate(struct node* ast)
+struct ast *add(struct ast *ast, struct token token)
 {
-    switch (ast->type)
+    struct ast *node = create(token);
+    if (ast->left == NULL)
+        ast->left = node;
+    else
+        ast->right = node;
+
+    return ast;
+}
+
+int evaluate(struct ast* ast)
+{
+    switch (ast->token.type)
     {
         case OR:
             return evaluate(ast->left) || evaluate(ast->right);
@@ -34,13 +46,15 @@ int evaluate(struct node* ast)
         default:
             for (int i = 0; i < FUN_LENGTH; i++)
             {
-                if (expressions[i].type == ast->type)
+                if (expressions[i].type == ast->token.type)
                 {
-                    return expressions[i].function(ast->value, 0);
+                    return expressions[i].function(ast->token.value, 0);
                 }
             }
         break;
     }
+
+    return 1;
 }
 
 int is_newer(char *path, unsigned int *timestamp)
@@ -48,13 +62,18 @@ int is_newer(char *path, unsigned int *timestamp)
     struct stat statbuff;
     lstat(path, &statbuff);
     struct timespec time = statbuff.st_mtim;
+    __syscall_slong_t tmpstamp = *timestamp;
 
-    return time.tv_nsec > timestamp;
+    return time.tv_nsec > tmpstamp;
 }
 
 int print(char *path, unsigned int *isFolder)
 {
-    printf("%s\n", path);
+    if (isFolder)
+        printf("%s\n", path);
+    else
+        printf("%s\n", path);
+
     return 1;
 }
 
@@ -65,7 +84,7 @@ int group_own(char *path, unsigned int *gid)
    lstat(path, &statbuff);
    gid_t pgid = statbuff.st_gid;
 
-   return pgid == gid;
+   return pgid == *gid;
 }
 
 // Use https://pubs.opengroup.org/onlinepubs/7908799/xsh/getpwnam.html to get uid from login
@@ -75,11 +94,12 @@ int user_own(char *path, unsigned int *uid)
     lstat(path, &statbuff);
     gid_t puid = statbuff.st_uid;
 
-    return puid == uid;
+    return puid == *uid;
 }
 
 int rm(char *path, unsigned int *placeholder)
 {
+    placeholder = placeholder;
     if (remove(path) == 0)
         return 1;
     return 0;
@@ -87,21 +107,9 @@ int rm(char *path, unsigned int *placeholder)
 
 int has_name(char *path, char *name)
 {
-    if (strcmp(path, name) == 0)
+    char *pattern = malloc((sizeof(path) + 3) * sizeof(char));
+    sprintf(pattern, "*%s*", name);
+    if (fnmatch(pattern, name, 0) == 0)
         return 1;
-    return 0;
-}
-
-int is_operator(char *operator)
-{
-    if (
-        strcmp(operator, "-o") == 0
-        || strcmp(operator, "-a") == 0
-        || strcmp(operator, "!") == 0
-        || strcmp(operator, "(") == 0
-        || strcmp(operator, ")") == 0
-    )
-    return 1;
-
     return 0;
 }

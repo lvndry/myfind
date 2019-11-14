@@ -3,74 +3,52 @@
 
 #define FUN_LENGTH 5
 
-enum node_type
-{
-    OR,
-    AND,
-    NOT,
-    PARENTHESES,
-    OPERATOR,
-    ARG
-};
+#include "parse.h"
 
-struct token
+struct ast
 {
-    enum node_type type;
-    char *value;
-};
-
-struct node
-{
-    enum node_type type;
-    struct node *left;
-    struct node *right;
-    char *value;
+    struct token token;
+    struct ast *left;
+    struct ast *right;
 };
 
 struct expression
 {
-    enum node_type type;
-    char *name;
-    int (*function)(char *path, void* data);
+    enum token_type type;
+    int (*function)(char *path, unsigned int * data);
 };
 
-struct expression expressions[FUN_LENGTH] = {
-    {
-        .name = "newer",
-        .function = is_newer,
-    },
-    {
-        .name = "print",
-        .function = print,
-    },
-    {
-        .name = "group",
-        .function = group_own,
-    },
-    {
-        .name = "user",
-        .function = user_own,
-    },
-    {
-        .name = "delete",
-        .function = rm,
-    },
-};
-
-struct token
-{
-    enum node_type type;
-    char *value;
-    int (*parse_function)(char *argv[], int *arg_ptr);
-};
-
-struct node *init(void* value, enum node_type);
-void remove_node(struct node *node);
-int eval(struct node* expresssion);
+struct ast *create(struct token token);
+struct ast *add(struct ast *ast, struct token);
+void remove_node(struct ast *ast);
+int eval(struct ast* expresssion);
 int is_newer(char *path, unsigned int *timestamp);
 int print(char *path,  unsigned int *isFolder);
 int group_own(char *path, unsigned int *gid);
 int user_own(char *path, unsigned int *uid);
 int rm(char *path, unsigned int *placeholder);
+
+struct expression expressions[] = {
+    {
+        .type = NEWER,
+        .function = is_newer,
+    },
+    {
+        .type = PRINT,
+        .function = print,
+    },
+    {
+        .type = GROUP,
+        .function = group_own,
+    },
+    {
+        .type = USER,
+        .function = user_own,
+    },
+    {
+        .type = DELETE,
+        .function = rm,
+    },
+};
 
 #endif

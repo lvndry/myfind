@@ -1,9 +1,9 @@
 #ifndef PARSE_H
 #define PARSE_H
 
-struct expression {
+struct parser {
     char *value;
-    int (*func)(char *argv[], int* cursor);
+    struct token (*func)(char *argv[], int* cursor);
 };
 
 enum token_type
@@ -19,13 +19,14 @@ enum token_type
     OR,
     NOT,
     PAREN_O,
-    PAREN_P,
+    PAREN_C,
 
     EXEC,
     EXECDIR,
     EXECPLUS,
     DELETE,
-    PRINT
+    PRINT,
+    NONE
 };
 
 struct token {
@@ -37,7 +38,18 @@ void parse(char *argv[], int start, int end);
 int isOperand(const char *op);
 
 // token parsing functions
-int parse_name(char *argv[], int* cursor);
-int parse_oparen(char *argv[], int* cursor);
+struct token parse_name(char *argv[], int* cursor);
+struct token parse_oparen(char *argv[], int* cursor);
+struct token parse_cparen(char *argv[], int *cursor);
+struct token parse_print(char *argv[], int* cursor);
+struct token parse_or(char *argv[], int *cursor);
+struct token parse_and(char *argv[], int *cursor);
+struct token parse_not(char *argv[], int *cursor);
+
+// Stack functions
+void push_operator(struct token token);
+struct token pop_operator();
+void push_operand(struct token token);
+struct token pop_operand();
 
 #endif
