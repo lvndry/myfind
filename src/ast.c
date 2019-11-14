@@ -1,4 +1,4 @@
-#define _GNU_SOURCE
+#define _DEFAULT_SOURCE
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>

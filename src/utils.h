@@ -1,6 +1,6 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-char *concat(char **argv);
+int islink(char *path);
 
 #endif

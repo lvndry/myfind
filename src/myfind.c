@@ -1,4 +1,4 @@
-#define _GNU_SOURCE
+#define _DEFAULT_SOURCE
 #include <dirent.h>
 #include <err.h>
 #include <errno.h>
@@ -14,6 +14,7 @@
 
 #include "parse.h"
 #include "ast.h"
+#include "utils.h"
 
 struct opts_t
 {
@@ -152,13 +153,6 @@ int ls(char *path)
         printf("%s\n", path);
 
     return closedir(dir);
-}
-
-int islink(char *path)
-{
-    struct stat buff;
-    lstat(path, &buff);
-    return S_ISLNK(buff.st_mode);
 }
 
 void myfind(char *path)
