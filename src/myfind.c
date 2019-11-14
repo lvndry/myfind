@@ -13,6 +13,7 @@
 #include <unistd.h>
 
 #include "parse.h"
+#include "ast.h"
 
 struct opts_t
 {
@@ -178,7 +179,11 @@ int main(int argc, char **argv)
     char *path;
     int optend = setOptions(1, argc, argv);
     int pathend = getPaths(optend + 1, argc, argv);
-    parse(argv, pathend + 1, argc);
+    struct token *tokens = parse(argv, pathend + 1, argc);
+    for (int i = 0; i < 4; i++)
+        printf("{ %d, %s }\n", tokens[i].type, tokens[i].value);
+    constructTree(tokens);
+
     return 1;
     if (pathend - optend > 0)
     {

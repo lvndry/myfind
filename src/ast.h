@@ -18,37 +18,17 @@ struct expression
     int (*function)(char *path, unsigned int * data);
 };
 
-struct ast *create(struct token token);
-struct ast *add(struct ast *ast, struct token);
+struct ast *create_node(struct token token);
+void push_node(struct ast *node);
+struct ast *pop_node();
 void remove_node(struct ast *ast);
+struct ast *constructTree(struct token postfix[]);
 int eval(struct ast* expresssion);
+
 int is_newer(char *path, unsigned int *timestamp);
 int print(char *path,  unsigned int *isFolder);
 int group_own(char *path, unsigned int *gid);
 int user_own(char *path, unsigned int *uid);
 int rm(char *path, unsigned int *placeholder);
-
-struct expression expressions[] = {
-    {
-        .type = NEWER,
-        .function = is_newer,
-    },
-    {
-        .type = PRINT,
-        .function = print,
-    },
-    {
-        .type = GROUP,
-        .function = group_own,
-    },
-    {
-        .type = USER,
-        .function = user_own,
-    },
-    {
-        .type = DELETE,
-        .function = rm,
-    },
-};
 
 #endif

@@ -107,7 +107,7 @@ int isOperator(const char *op)
     return 0;
 }
 
-void parse(char *argv[], int start, int end)
+struct token *parse(char *argv[], int start, int end)
 {
     int cursor = start;
     int len = sizeof(parse_table) / sizeof(parse_table[0]);
@@ -159,7 +159,9 @@ void parse(char *argv[], int start, int end)
     }
     while (topo > 0)
         postfix[toppost++] = pop_operator();
-    print_stacks();
+    // print_stacks();
+
+    return postfix;
 }
 
 // Operators functions

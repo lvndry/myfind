@@ -8,6 +8,7 @@ struct parser {
 
 enum token_type
 {
+    NONE,
     NAME,
     TYPE,
     NEWER,
@@ -25,8 +26,7 @@ enum token_type
     EXECDIR,
     EXECPLUS,
     DELETE,
-    PRINT,
-    NONE
+    PRINT
 };
 
 struct token {
@@ -34,7 +34,7 @@ struct token {
     char *value;
 };
 
-void parse(char *argv[], int start, int end);
+struct token *parse(char *argv[], int start, int end);
 int isOperand(const char *op);
 
 // token parsing functions

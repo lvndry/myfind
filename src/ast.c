@@ -9,9 +9,45 @@
 
 #include "ast.h"
 
-/* THIS IS PSEUDO CODE. DO NOT COMPILE */
+#define TREE_SIZE 50
 
-struct ast *create(struct token token)
+struct ast *tree[TREE_SIZE] = { NULL };
+int treetop = 0;
+
+struct expression expressions[] = {
+    {
+        .type = NEWER,
+        .function = is_newer,
+    },
+    {
+        .type = PRINT,
+        .function = print,
+    },
+    {
+        .type = GROUP,
+        .function = group_own,
+    },
+    {
+        .type = USER,
+        .function = user_own,
+    },
+    {
+        .type = DELETE,
+        .function = rm,
+    },
+};
+
+void push_node(struct ast *node)
+{
+    tree[treetop++] = node;
+}
+
+struct ast *pop_node()
+{
+    return tree[--treetop];
+}
+
+struct ast *create_node(struct token token)
 {
     struct ast *ast = malloc(sizeof(struct ast));
 
@@ -22,15 +58,54 @@ struct ast *create(struct token token)
     return ast;
 }
 
-struct ast *add(struct ast *ast, struct token token)
+int isParent(enum token_type type)
 {
-    struct ast *node = create(token);
-    if (ast->left == NULL)
-        ast->left = node;
-    else
-        ast->right = node;
+    if (
+        type == OR
+        || type == AND
+        || type == NOT
+        || type == NONE
+    )
+        return 1;
+    return 0;
+}
 
-    return ast;
+// to delete
+void inorder(struct ast *t)
+{
+    if (t)
+    {
+        inorder(t->left);
+        printf("%d ", t->token.type);
+        inorder(t->right);
+    }
+}
+
+struct ast *constructTree(struct token postfix[])
+{
+    struct ast *parent;
+    struct ast *right;
+    struct ast *left;
+    int i = 0;
+
+    while (postfix[i].type)
+    {
+        if (!isParent(postfix[i].type))
+            parent = create_node(postfix[i]);
+        else
+        {
+            parent = create_node(postfix[i]);
+            right = pop_node();
+            left = pop_node();
+            parent->left = left;
+            parent->right = right;
+        }
+        push_node(parent);
+        i++;
+    }
+    parent = pop_node();
+    inorder(parent);
+    return parent;
 }
 
 int evaluate(struct ast* ast)
