@@ -110,11 +110,11 @@ struct ast *constructTree(struct token postfix[])
         i++;
     }
     parent = pop_node();
-    inorder(parent);
+    // inorder(parent);
     return parent;
 }
 
-int evaluate(struct ast* ast)
+int evaluate(struct ast* ast, char *pathname, char *filename)
 {
     if (ast == NULL)
         return 1;
@@ -123,17 +123,17 @@ int evaluate(struct ast* ast)
     switch (ast->token.type)
     {
         case OR:
-            return evaluate(ast->left) || evaluate(ast->right);
+            return evaluate(ast->left, pathname, filename) || evaluate(ast->right, pathname, filename);
         case AND:
-            return evaluate(ast->left) || evaluate(ast->right);
+            return evaluate(ast->left, pathname, filename) || evaluate(ast->right, pathname, filename);
         case NOT:
-            return !(evaluate(ast->left) && evaluate(ast->right));
+            return !(evaluate(ast->left, pathname, filename) && evaluate(ast->right, pathname, filename));
         default:
             for (int i = 0; i < len; i++)
             {
                 if (expressions[i].type == ast->token.type)
                 {
-                    return expressions[i].function(ast->token.value, "lol");
+                    return expressions[i].function(ast->token.value, pathname, filename);
                 }
             }
         break;
@@ -142,8 +142,9 @@ int evaluate(struct ast* ast)
     return 1;
 }
 
-int is_newer(char *argv[], char *timestamp)
+int is_newer(char *argv[], char *timestamp, char *filenname)
 {
+    UNUSED(filenname);
     struct stat statbuff;
     lstat(argv[0], &statbuff);
     struct timespec time = statbuff.st_mtim;
@@ -152,8 +153,10 @@ int is_newer(char *argv[], char *timestamp)
     return time.tv_nsec > tmpstamp;
 }
 
-int print(char *argv[], char *isFolder)
+int print(char *argv[], char *isFolder, char *filename)
 {
+    UNUSED(filename);
+
     if (isFolder)
         printf("%s\n", argv[0]);
     else
@@ -163,9 +166,11 @@ int print(char *argv[], char *isFolder)
 }
 
 // In myfind use https://linux.die.net/man/3/getgrnam to get given gid of group
-int group_own(char *argv[], char *gid)
+int group_own(char *argv[], char *gid, char *filename)
 {
     UNUSED(gid);
+    UNUSED(filename);
+
     struct stat statbuff;
     lstat(argv[0], &statbuff);
 
@@ -173,26 +178,32 @@ int group_own(char *argv[], char *gid)
 }
 
 // Use https://pubs.opengroup.org/onlinepubs/7908799/xsh/getpwnam.html to get uid from login
-int user_own(char *argv[], char *uid)
+int user_own(char *argv[], char *uid, char *filename)
 {
     UNUSED(uid);
+    UNUSED(filename);
+
     struct stat statbuff;
     lstat(argv[0], &statbuff);
 
     return 1;
 }
 
-int rm(char *argv[], char *placeholder)
+int rm(char *argv[], char *placeholder, char *filename)
 {
     UNUSED(placeholder);
+    UNUSED(filename);
+
     if (remove(argv[0]) == 0)
         return 1;
     return 0;
 }
 
-int has_name(char *argv[], char *name)
+int has_name(char *argv[], char *pathname, char *filename)
 {
-    if (fnmatch(argv[0], name, FNM_PATHNAME) == 0)
+    UNUSED(filename);
+
+    if (fnmatch(pathname, argv[0], FNM_PATHNAME) == 0)
         return 1;
     return 0;
 }

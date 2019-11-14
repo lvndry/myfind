@@ -106,12 +106,13 @@ void format_path(char *path)
         path[strlen(path) - 1] = '\0';
 }
 
-int ls(char *path)
+int ls(char *path, struct ast *ast)
 {
     DIR *dir = opendir(path);
     if (dir == NULL)
     {
-        printf("%s\n", path);
+        if (evaluate(ast, path, ""))
+            printf("%s\n", path);
         if(access(path, R_OK) == -1)
         {
             fprintf(stderr, "myfind: %s: %s\n", path, strerror(errno));
@@ -123,28 +124,30 @@ int ls(char *path)
     struct dirent *file;
     char filename[PATH_MAX];
 
-    if (!options.d)
+    if (!options.d && evaluate(ast, path, ""))
         printf("%s\n", path);
 
     file = readdir(dir);
-    if (file == NULL)
+    if (file == NULL && evaluate(ast, path, ""))
     {
         printf("%s\n", path);
         return 1;
     }
     do
     {
-        getFilename(filename, path, file->d_name);
-        if (is_valid_name(file->d_name))
+        char *dname = file->d_name;
+        getFilename(filename, path, dname);
+        if (is_valid_name(dname))
         {
             getStat(filename);
             if (S_ISDIR(statbuff.st_mode))
             {
-                ls(filename);
+                ls(filename, ast);
             }
             else
             {
-                printf("%s\n", filename);
+                if (evaluate(ast, filename, dname))
+                    printf("%s\n", filename);
             }
         }
     } while ((file = readdir(dir)) != NULL);
@@ -155,17 +158,17 @@ int ls(char *path)
     return closedir(dir);
 }
 
-void myfind(char *path)
+void myfind(char *path, struct ast *ast)
 {
     if (islink(path))
     {
         if (options.p)
             printf("%s\n", path);
         else
-            ls(path);
+            ls(path, ast);
     }
     else
-        ls(path);
+        ls(path, ast);
 }
 
 int main(int argc, char **argv)
@@ -177,21 +180,19 @@ int main(int argc, char **argv)
     // for (int i = 0; i < 4; i++)
     //     printf("{ %d, %s }\n", tokens[i].type, tokens[i].value[0]);
     struct ast *ast = constructTree(tokens);
-    evaluate(ast);
 
-    return 1;
     if (pathend - optend > 0)
     {
         for (int i = optend + 1; i <= pathend; i++)
         {
             path = argv[i];
-            myfind(path);
+            myfind(path, ast);
         }
     }
     else
     {
         path = ".";
-        myfind(path);
+        myfind(path, ast);
     }
 
     return 0;

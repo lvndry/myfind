@@ -4,9 +4,9 @@
 #include <stdbool.h>
 
 #include "parse.h"
+#include "utils.h"
 
 #define SIZE 50
-#define UNUSED(x) (void)(x)
 
 struct parser parse_table[] = {
     // Operators

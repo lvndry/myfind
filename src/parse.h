@@ -9,18 +9,19 @@ struct parser {
 enum token_type
 {
     NONE,
-    NAME,
-    TYPE,
-    NEWER,
-    PERM,
-    USER,
-    GROUP,
 
     AND,
     OR,
     NOT,
     PAREN_O,
     PAREN_C,
+
+    NAME,
+    TYPE,
+    NEWER,
+    PERM,
+    USER,
+    GROUP,
 
     EXEC,
     EXECDIR,
