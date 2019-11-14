@@ -180,8 +180,8 @@ int main(int argc, char **argv)
     int optend = setOptions(1, argc, argv);
     int pathend = getPaths(optend + 1, argc, argv);
     struct token *tokens = parse(argv, pathend + 1, argc);
-    for (int i = 0; i < 4; i++)
-        printf("{ %d, %s }\n", tokens[i].type, tokens[i].value);
+    // for (int i = 0; i < 4; i++)
+    //     printf("{ %d, %s }\n", tokens[i].type, tokens[i].value[0]);
     constructTree(tokens);
 
     return 1;

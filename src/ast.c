@@ -123,7 +123,7 @@ int evaluate(struct ast* ast)
             {
                 if (expressions[i].type == ast->token.type)
                 {
-                    return expressions[i].function(ast->token.value, 0);
+                    return expressions[i].function(ast->token.value[0], 0);
                 }
             }
         break;

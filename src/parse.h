@@ -31,7 +31,7 @@ enum token_type
 
 struct token {
     enum token_type type;
-    char *value;
+    char *value[100];
 };
 
 struct token *parse(char *argv[], int start, int end);
@@ -46,7 +46,7 @@ struct token parse_or(char *argv[], int *cursor);
 struct token parse_and(char *argv[], int *cursor);
 struct token parse_not(char *argv[], int *cursor);
 
-// Stack functions
+// operators/operands stack management functions
 void push_operator(struct token token);
 struct token pop_operator();
 void push_operand(struct token token);

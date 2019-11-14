@@ -55,7 +55,7 @@ void print_stacks()
         else if (t.type == PRINT)
             printf("print ");
         else
-            printf("%s ", t.value);
+            printf("%s ", t.value[0]);
     }
 }
 
@@ -121,7 +121,7 @@ struct token *parse(char *argv[], int start, int end)
             {
                 if (strcmp(argv[cursor], "(") == 0)
                 {
-                    struct token token = { PAREN_O, NULL };
+                    struct token token = { PAREN_O, { NULL } };
                     push_operator(token);
                 }
                 else if (strcmp(argv[cursor], ")") == 0)
@@ -136,7 +136,7 @@ struct token *parse(char *argv[], int start, int end)
                 {
                     if (pushand)
                     {
-                        struct token and = { AND, NULL };
+                        struct token and = { AND, { NULL } };
                         push_operator(and);
                     }
 
@@ -171,7 +171,7 @@ struct token parse_and(char *argv[], int *cursor)
     UNUSED(argv);
     UNUSED(cursor);
 
-    struct token token = { AND, NULL };
+    struct token token = { AND, { NULL } };
     return token;
 }
 
@@ -180,7 +180,7 @@ struct token parse_or(char *argv[], int *cursor)
     UNUSED(argv);
     UNUSED(cursor);
 
-    struct token token = { OR, NULL };
+    struct token token = { OR, { NULL } };
     return token;
 }
 
@@ -190,7 +190,7 @@ struct token parse_oparen(char *argv[], int *cursor)
     UNUSED(argv);
     UNUSED(cursor);
 
-    struct token token = { PAREN_O, NULL };
+    struct token token = { PAREN_O, { NULL } };
     return token;;
 }
 
@@ -199,7 +199,7 @@ struct token parse_cparen(char *argv[], int *cursor)
     UNUSED(argv);
     UNUSED(cursor);
 
-    struct token token = { PAREN_C, NULL };
+    struct token token = { PAREN_C, { NULL } };
     return token;
 }
 
@@ -207,7 +207,8 @@ struct token parse_not(char *argv[], int *cursor)
 {
     UNUSED(argv);
     UNUSED(cursor);
-    struct token token = { NOT, NULL };
+
+    struct token token = { NOT, { NULL } };
     return token;
 }
 
@@ -215,7 +216,7 @@ struct token parse_not(char *argv[], int *cursor)
 
 struct token parse_name(char *argv[], int* cursor)
 {
-    struct token token = { NAME, argv[*cursor + 1] };
+    struct token token = { NAME, { argv[*cursor + 1] } };
     *cursor += 1;
     return token;
 }
@@ -225,6 +226,6 @@ struct token parse_print(char *argv[], int* cursor)
     UNUSED(argv);
     UNUSED(cursor);
 
-    struct token token = { PRINT, NULL };
+    struct token token = { PRINT, { NULL } };
     return token;
 }
