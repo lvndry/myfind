@@ -8,6 +8,8 @@ BIN= myfind
 
 .PHONY: all myfind
 
+rebuild: clean all
+
 all: myfind
 
 $(BIN): $(OBJS)

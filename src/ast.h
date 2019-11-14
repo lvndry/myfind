@@ -15,7 +15,7 @@ struct ast
 struct expression
 {
     enum token_type type;
-    int (*function)(char *path, unsigned int * data);
+    int (*function)(char *argv[], char *data);
 };
 
 struct ast *create_node(struct token token);
@@ -23,12 +23,14 @@ void push_node(struct ast *node);
 struct ast *pop_node();
 void remove_node(struct ast *ast);
 struct ast *constructTree(struct token postfix[]);
-int eval(struct ast* expresssion);
+int evaluate(struct ast* expresssion);
 
-int is_newer(char *path, unsigned int *timestamp);
-int print(char *path,  unsigned int *isFolder);
-int group_own(char *path, unsigned int *gid);
-int user_own(char *path, unsigned int *uid);
-int rm(char *path, unsigned int *placeholder);
+// Evaluation functions
+int is_newer(char *argv[], char *timestamp);
+int print(char *argv[],  char *isFolder);
+int group_own(char *argv[], char *gid);
+int user_own(char *argv[], char *uid);
+int rm(char *argv[], char *placeholder);
+int has_name(char *argv[], char *name);
 
 #endif

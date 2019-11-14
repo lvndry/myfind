@@ -1,13 +1,15 @@
 #define _DEFAULT_SOURCE
+#include <fcntl.h>
+#include <fnmatch.h>
+#include <grp.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <fnmatch.h>
 
 #include "ast.h"
+#include "utils.h"
 
 #define TREE_SIZE 50
 
@@ -15,6 +17,10 @@ struct ast *tree[TREE_SIZE] = { NULL };
 int treetop = 0;
 
 struct expression expressions[] = {
+    {
+        .type = NAME,
+        .function = has_name,
+    },
     {
         .type = NEWER,
         .function = is_newer,
@@ -110,6 +116,10 @@ struct ast *constructTree(struct token postfix[])
 
 int evaluate(struct ast* ast)
 {
+    if (ast == NULL)
+        return 1;
+
+    int len = sizeof(expressions) / sizeof(expressions[0]);
     switch (ast->token.type)
     {
         case OR:
@@ -119,11 +129,11 @@ int evaluate(struct ast* ast)
         case NOT:
             return !(evaluate(ast->left) && evaluate(ast->right));
         default:
-            for (int i = 0; i < FUN_LENGTH; i++)
+            for (int i = 0; i < len; i++)
             {
                 if (expressions[i].type == ast->token.type)
                 {
-                    return expressions[i].function(ast->token.value[0], 0);
+                    return expressions[i].function(ast->token.value, "lol");
                 }
             }
         break;
@@ -132,59 +142,57 @@ int evaluate(struct ast* ast)
     return 1;
 }
 
-int is_newer(char *path, unsigned int *timestamp)
+int is_newer(char *argv[], char *timestamp)
 {
     struct stat statbuff;
-    lstat(path, &statbuff);
+    lstat(argv[0], &statbuff);
     struct timespec time = statbuff.st_mtim;
     __syscall_slong_t tmpstamp = *timestamp;
 
     return time.tv_nsec > tmpstamp;
 }
 
-int print(char *path, unsigned int *isFolder)
+int print(char *argv[], char *isFolder)
 {
     if (isFolder)
-        printf("%s\n", path);
+        printf("%s\n", argv[0]);
     else
-        printf("%s\n", path);
+        printf("%s\n", argv[0]);
+
+    return 0;
+}
+
+// In myfind use https://linux.die.net/man/3/getgrnam to get given gid of group
+int group_own(char *argv[], char *gid)
+{
+    UNUSED(gid);
+    struct stat statbuff;
+    lstat(argv[0], &statbuff);
+
+   return 1;
+}
+
+// Use https://pubs.opengroup.org/onlinepubs/7908799/xsh/getpwnam.html to get uid from login
+int user_own(char *argv[], char *uid)
+{
+    UNUSED(uid);
+    struct stat statbuff;
+    lstat(argv[0], &statbuff);
 
     return 1;
 }
 
-// In myfind use https://linux.die.net/man/3/getgrnam to get given gid of group
-int group_own(char *path, unsigned int *gid)
+int rm(char *argv[], char *placeholder)
 {
-   struct stat statbuff;
-   lstat(path, &statbuff);
-   gid_t pgid = statbuff.st_gid;
-
-   return pgid == *gid;
-}
-
-// Use https://pubs.opengroup.org/onlinepubs/7908799/xsh/getpwnam.html to get uid from login
-int user_own(char *path, unsigned int *uid)
-{
-    struct stat statbuff;
-    lstat(path, &statbuff);
-    gid_t puid = statbuff.st_uid;
-
-    return puid == *uid;
-}
-
-int rm(char *path, unsigned int *placeholder)
-{
-    placeholder = placeholder;
-    if (remove(path) == 0)
+    UNUSED(placeholder);
+    if (remove(argv[0]) == 0)
         return 1;
     return 0;
 }
 
-int has_name(char *path, char *name)
+int has_name(char *argv[], char *name)
 {
-    char *pattern = malloc((sizeof(path) + 3) * sizeof(char));
-    sprintf(pattern, "*%s*", name);
-    if (fnmatch(pattern, name, 0) == 0)
+    if (fnmatch(argv[0], name, FNM_PATHNAME) == 0)
         return 1;
     return 0;
 }

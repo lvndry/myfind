@@ -176,7 +176,8 @@ int main(int argc, char **argv)
     struct token *tokens = parse(argv, pathend + 1, argc);
     // for (int i = 0; i < 4; i++)
     //     printf("{ %d, %s }\n", tokens[i].type, tokens[i].value[0]);
-    constructTree(tokens);
+    struct ast *ast = constructTree(tokens);
+    evaluate(ast);
 
     return 1;
     if (pathend - optend > 0)
