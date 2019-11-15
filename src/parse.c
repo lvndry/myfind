@@ -29,6 +29,7 @@ struct parser parse_table[] = {
     {"-perm", parse_perm},
     {"-group", parse_group},
     {"-user", parse_user},
+    {"-delete", parse_delete}
 };
 
 struct token operators[SIZE];
@@ -271,5 +272,14 @@ struct token parse_user(char *argv[], int *cursor)
     struct token token = { USER, { argv[*cursor + 1] } };
     *cursor += 1;
 
+    return token;
+}
+
+struct token parse_delete(char *argv[], int *cursor)
+{
+    UNUSED(argv);
+    UNUSED(cursor);
+
+    struct token token = { DELETE, { NULL } };
     return token;
 }
