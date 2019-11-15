@@ -3,7 +3,8 @@
 
 #define UNUSED(x) (void)(x)
 
-int islink(char *path);
+int islink(const char *path);
 int remove_ds(const char *path);
+int isNumeric(const char *str);
 
 #endif

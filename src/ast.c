@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include <fnmatch.h>
 #include <grp.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,7 +46,19 @@ struct expression expressions[] = {
     {
         .type = TYPE,
         .function = has_type,
-    }
+    },
+    {
+        .type = PERM,
+        .function = has_perm,
+    },
+    {
+        .type = GROUP,
+        .function = group_own,
+    },
+        {
+        .type = USER,
+        .function = user_own,
+    },
 };
 
 void push_node(struct ast *node)
@@ -147,15 +160,17 @@ int evaluate(struct ast* ast, char *pathname, char *filename)
     return 1;
 }
 
-int is_newer(char *argv[], char *timestamp, const char *filenname)
+int is_newer(char *argv[], char *pathname, const char *filenname)
 {
     UNUSED(filenname);
     struct stat statbuff;
-    lstat(argv[0], &statbuff);
-    struct timespec time = statbuff.st_mtim;
-    __syscall_slong_t tmpstamp = *timestamp;
 
-    return time.tv_nsec > tmpstamp;
+    stat(argv[0], &statbuff);
+    struct timespec timearg = statbuff.st_mtim;
+    stat(pathname, &statbuff);
+    struct timespec timepath = statbuff.st_mtim;
+
+    return timepath.tv_sec > timearg.tv_sec;
 }
 
 int print(char *argv[], char *isFolder, const char *filename)
@@ -171,15 +186,18 @@ int print(char *argv[], char *isFolder, const char *filename)
 }
 
 // In myfind use https://linux.die.net/man/3/getgrnam to get given gid of group
-int group_own(char *argv[], char *gid, const char *filename)
+int group_own(char *argv[], char *pathname, const char *filename)
 {
-    UNUSED(gid);
     UNUSED(filename);
 
+    struct group *group = getgrnam(argv[0]);
+    if (group == NULL)
+        return 0;
     struct stat statbuff;
-    lstat(argv[0], &statbuff);
+    stat(pathname, &statbuff);
+    printf("user->pw_uid: %d - statbuff.st_gid: %d\n", group->gr_gid, statbuff.st_gid);
 
-   return 1;
+    return group->gr_gid == statbuff.st_gid;
 }
 
 // Use https://pubs.opengroup.org/onlinepubs/7908799/xsh/getpwnam.html to get uid from login
@@ -188,10 +206,13 @@ int user_own(char *argv[], char *uid, const char *filename)
     UNUSED(uid);
     UNUSED(filename);
 
+    struct passwd *user = getpwnam(argv[0]);
+    if (user == NULL)
+        return 0;
     struct stat statbuff;
-    lstat(argv[0], &statbuff);
-
-    return 1;
+    stat(argv[0], &statbuff);
+    printf("user->pw_uid: %d - statbuff.st_uid: %d\n", user->pw_uid, statbuff.st_uid);
+    return user->pw_gid == statbuff.st_uid;
 }
 
 int rm(char *argv[], char *pathname, const char *filename)
@@ -241,3 +262,28 @@ int has_type(char *argv[], char *pathname, const char *filename)
     }
     return 1;
 }
+
+
+int has_perm(char *argv[], char *pathname, const char *filename)
+{
+    UNUSED(pathname);
+    UNUSED(filename);
+    UNUSED(argv);
+    /*
+    printf("%s\n", argv[0]);
+    if (argv[0][0] == '-')
+    {
+        return 1;
+    }
+    else if (argv[0][0] == '/')
+    {
+        return 1;
+    }
+    else if (isNumeric(argv[0]))
+    {
+    }
+    */
+    return 0;
+    // else error
+}
+

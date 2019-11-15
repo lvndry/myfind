@@ -25,6 +25,10 @@ struct parser parse_table[] = {
     {"-name", parse_name},
     {"-print", parse_print},
     {"-type", parse_type},
+    {"-newer", parse_newer},
+    {"-perm", parse_perm},
+    {"-group", parse_group},
+    {"-user", parse_user},
 };
 
 struct token operators[SIZE];
@@ -233,9 +237,39 @@ struct token parse_print(char *argv[], int* cursor)
 
  struct token parse_type(char *argv[], int *cursor)
  {
-     UNUSED(argv);
-
      // handle error if next argv is not valid (if not present or if starts with -)
      struct token token = { TYPE, { argv[*cursor + 1] } };
      return token;
  }
+
+ struct token parse_newer(char *argv[], int *cursor)
+ {
+     // handle error if next argv is not valid (if not present or if starts with -)
+     struct token token = { NEWER, { argv[*cursor + 1] } };
+     *cursor += 1;
+     return token;
+ }
+
+struct token parse_perm(char *argv[], int *cursor)
+{
+    // handle error if next argv is not valid (if not present or if starts with -)
+    struct token token = { PERM, { argv[*cursor + 1 ] } };
+    *cursor += 1;
+    return token;
+}
+
+struct token parse_group(char *argv[], int *cursor)
+{
+    struct token token = { GROUP, { argv[*cursor + 1] } };
+    *cursor += 1;
+
+    return token;
+}
+
+struct token parse_user(char *argv[], int *cursor)
+{
+    struct token token = { USER, { argv[*cursor + 1] } };
+    *cursor += 1;
+
+    return token;
+}

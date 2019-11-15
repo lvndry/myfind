@@ -40,5 +40,6 @@ int user_own(char *argv[], char *uid, const char *filename);
 int rm(char *argv[], char *placeholder, const char *filename);
 int has_name(char *argv[], char *name, const char *filename);
 int has_type(char *argv[], char *pathname, const char *filename);
+int has_perm(char *argv[], char *pathname, const char *filename);
 
 #endif
