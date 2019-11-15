@@ -4,6 +4,8 @@
 #include <ctype.h>
 #include <stdlib.h>
 
+#include <stdio.h>
+
 int islink(const char *path)
 {
     struct stat buff;
@@ -30,4 +32,23 @@ int isNumeric(const char * str)
     }
 
     return 1;
+}
+
+int toOctal(int decimal)
+{
+    int octaltab[10];
+    int octalnum = 0;
+    int i;
+    int j;
+
+    for(i = 0; decimal > 0; i++)
+    {
+        octaltab[i] = decimal % 8;
+        decimal /= 8;
+    }
+
+    for(j = i - 1; j >= 0; j--)
+        octalnum = octalnum * 10 + octaltab[j];
+
+    return octalnum;
 }

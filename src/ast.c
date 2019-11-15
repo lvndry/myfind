@@ -160,7 +160,7 @@ int evaluate(struct ast* ast, char *pathname, char *filename)
     return 1;
 }
 
-int is_newer(char *argv[], char *pathname, const char *filenname)
+int is_newer(char *argv[], char *pathname, char *filenname)
 {
     UNUSED(filenname);
     struct stat statbuff;
@@ -173,20 +173,16 @@ int is_newer(char *argv[], char *pathname, const char *filenname)
     return timepath.tv_sec > timearg.tv_sec;
 }
 
-int print(char *argv[], char *isFolder, const char *filename)
+int print(char *argv[], char *pathname, char *filename)
 {
+    UNUSED(argv);
+    UNUSED(pathname);
     UNUSED(filename);
-
-    if (isFolder)
-        printf("%s\n", argv[0]);
-    else
-        printf("%s\n", argv[0]);
-
-    return 0;
+    return 1;
 }
 
 // In myfind use https://linux.die.net/man/3/getgrnam to get given gid of group
-int group_own(char *argv[], char *pathname, const char *filename)
+int group_own(char *argv[], char *pathname, char *filename)
 {
     UNUSED(filename);
 
@@ -201,7 +197,7 @@ int group_own(char *argv[], char *pathname, const char *filename)
 }
 
 // Use https://pubs.opengroup.org/onlinepubs/7908799/xsh/getpwnam.html to get uid from login
-int user_own(char *argv[], char *uid, const char *filename)
+int user_own(char *argv[], char *uid, char *filename)
 {
     UNUSED(uid);
     UNUSED(filename);
@@ -215,25 +211,27 @@ int user_own(char *argv[], char *uid, const char *filename)
     return user->pw_gid == statbuff.st_uid;
 }
 
-int rm(char *argv[], char *pathname, const char *filename)
+int rm(char *argv[], char *pathname, char *filename)
 {
-    if (has_name(argv, pathname, filename) && remove(pathname) == 0)
+    UNUSED(argv);
+    UNUSED(filename);
+    if (remove(pathname) == 0)
         return 1;
     return 0;
 }
 
-// Should to add const char *
-int has_name(char *argv[], char *pathname, const char *filename)
+int has_name(char *argv[], char *pathname, char *filename)
 {
     UNUSED(pathname);
     int offset = remove_ds(filename);
 
+    // printf("filename: %s - fnmatch %d\n", pathname, fnmatch(argv[0], filename + offset, FNM_PATHNAME));
     if (fnmatch(argv[0], filename + offset, FNM_PATHNAME) == 0)
         return 1;
     return 0;
 }
 
-int has_type(char *argv[], char *pathname, const char *filename)
+int has_type(char *argv[], char *pathname, char *filename)
 {
     UNUSED(filename);
 
@@ -264,15 +262,25 @@ int has_type(char *argv[], char *pathname, const char *filename)
 }
 
 
-int has_perm(char *argv[], char *pathname, const char *filename)
+int has_perm(char *argv[], char *pathname, char *filename)
 {
     UNUSED(pathname);
     UNUSED(filename);
     UNUSED(argv);
-    /*
-    printf("%s\n", argv[0]);
+
+    struct stat buf;
+    stat(filename, &buf);
+    int statchmod = buf.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
+
     if (argv[0][0] == '-')
     {
+        char *cpy = argv[0] + 1;
+        int argmode = atoi(cpy);
+        int octmod = toOctal(statchmod);
+
+        UNUSED(argmode);
+        UNUSED(octmod);
+
         return 1;
     }
     else if (argv[0][0] == '/')
@@ -281,9 +289,11 @@ int has_perm(char *argv[], char *pathname, const char *filename)
     }
     else if (isNumeric(argv[0]))
     {
+        int argmod = atoi(argv[0]);
+        int octmod = toOctal(statchmod);
+        return octmod == argmod;
     }
-    */
+
     return 0;
     // else error
 }
-

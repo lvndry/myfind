@@ -51,6 +51,7 @@ struct token parse_newer(char *argv[], int *cursor);
 struct token parse_perm(char *argv[], int *cursor);
 struct token parse_group(char *argv[], int *cursor);
 struct token parse_user(char *argv[], int *cursor);
+struct token parse_delete(char *argv[], int *cursor);
 
 // operators/operands stack management functions
 void push_operator(struct token token);
