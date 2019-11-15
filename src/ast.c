@@ -7,6 +7,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <errno.h>
 
 #include "ast.h"
 #include "utils.h"
@@ -213,15 +214,30 @@ int has_name(char *argv[], char *pathname, const char *filename)
 
 int has_type(char *argv[], char *pathname, const char *filename)
 {
-
-    UNUSED(pathname);
     UNUSED(filename);
 
-    if (argv[0][0] == 'd')
-    {
-        if (1)
-            return 1;
-    }
+    struct stat statbuff;
+    lstat(pathname, &statbuff);
 
+    switch (argv[0][0])
+    {
+        case 'b':
+            return S_ISBLK(statbuff.st_mode);
+        case 'c':
+            return S_ISCHR(statbuff.st_mode);
+        case 'd':
+            return S_ISDIR(statbuff.st_mode);
+        case 'f':
+            return S_ISREG(statbuff.st_mode);
+        case 'l':
+            return S_ISLNK(statbuff.st_mode);
+        case 'p':
+            return S_ISFIFO(statbuff.st_mode);
+        case 's':
+            return S_ISSOCK(statbuff.st_mode);
+        default:
+            fprintf(stderr, "myfind: Invalid type argument");
+            exit(EXIT_FAILURE);
+    }
     return 1;
 }

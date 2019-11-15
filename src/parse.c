@@ -24,6 +24,7 @@ struct parser parse_table[] = {
     // Operands
     {"-name", parse_name},
     {"-print", parse_print},
+    {"-type", parse_type},
 };
 
 struct token operators[SIZE];
@@ -159,7 +160,6 @@ struct token *parse(char *argv[], int start, int end)
     }
     while (topo > 0)
         postfix[toppost++] = pop_operator();
-    // print_stacks();
 
     return postfix;
 }
@@ -191,7 +191,7 @@ struct token parse_oparen(char *argv[], int *cursor)
     UNUSED(cursor);
 
     struct token token = { PAREN_O, { NULL } };
-    return token;;
+    return token;
 }
 
 struct token parse_cparen(char *argv[], int *cursor)
@@ -216,6 +216,7 @@ struct token parse_not(char *argv[], int *cursor)
 
 struct token parse_name(char *argv[], int* cursor)
 {
+    // handle error if next argv is not valid (if not present or if starts with -)
     struct token token = { NAME, { argv[*cursor + 1] } };
     *cursor += 1;
     return token;
