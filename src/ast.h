@@ -21,7 +21,8 @@ struct ast
 struct expression
 {
     enum token_type type;
-    int (*function)(char *argv[], char *data, char *filename);
+    // Should be const char*
+    int (*function)(char *argv[], char *data, const char *filename);
 };
 
 struct ast *create_node(struct token token);
@@ -32,11 +33,12 @@ struct ast *constructTree(struct token postfix[]);
 int evaluate(struct ast* ast, char *pathname, char *filename);
 
 // Evaluation functions
-int is_newer(char *argv[], char *timestamp, char *filename);
-int print(char *argv[],  char *isFolder, char *filename);
-int group_own(char *argv[], char *gid, char *filename);
-int user_own(char *argv[], char *uid, char *filename);
-int rm(char *argv[], char *placeholder, char *filename);
-int has_name(char *argv[], char *name, char *filename);
+int is_newer(char *argv[], char *timestamp, const char *filename);
+int print(char *argv[],  char *isFolder, const char *filename);
+int group_own(char *argv[], char *gid, const char *filename);
+int user_own(char *argv[], char *uid, const char *filename);
+int rm(char *argv[], char *placeholder, const char *filename);
+int has_name(char *argv[], char *name, const char *filename);
+int has_type(char *argv[], char *pathname, const char *filename);
 
 #endif

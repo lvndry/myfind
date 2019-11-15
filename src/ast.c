@@ -41,6 +41,10 @@ struct expression expressions[] = {
         .type = DELETE,
         .function = rm,
     },
+    {
+        .type = TYPE,
+        .function = has_type,
+    }
 };
 
 void push_node(struct ast *node)
@@ -142,7 +146,7 @@ int evaluate(struct ast* ast, char *pathname, char *filename)
     return 1;
 }
 
-int is_newer(char *argv[], char *timestamp, char *filenname)
+int is_newer(char *argv[], char *timestamp, const char *filenname)
 {
     UNUSED(filenname);
     struct stat statbuff;
@@ -153,7 +157,7 @@ int is_newer(char *argv[], char *timestamp, char *filenname)
     return time.tv_nsec > tmpstamp;
 }
 
-int print(char *argv[], char *isFolder, char *filename)
+int print(char *argv[], char *isFolder, const char *filename)
 {
     UNUSED(filename);
 
@@ -166,7 +170,7 @@ int print(char *argv[], char *isFolder, char *filename)
 }
 
 // In myfind use https://linux.die.net/man/3/getgrnam to get given gid of group
-int group_own(char *argv[], char *gid, char *filename)
+int group_own(char *argv[], char *gid, const char *filename)
 {
     UNUSED(gid);
     UNUSED(filename);
@@ -178,7 +182,7 @@ int group_own(char *argv[], char *gid, char *filename)
 }
 
 // Use https://pubs.opengroup.org/onlinepubs/7908799/xsh/getpwnam.html to get uid from login
-int user_own(char *argv[], char *uid, char *filename)
+int user_own(char *argv[], char *uid, const char *filename)
 {
     UNUSED(uid);
     UNUSED(filename);
@@ -189,21 +193,35 @@ int user_own(char *argv[], char *uid, char *filename)
     return 1;
 }
 
-int rm(char *argv[], char *placeholder, char *filename)
+int rm(char *argv[], char *pathname, const char *filename)
 {
-    UNUSED(placeholder);
-    UNUSED(filename);
-
-    if (remove(argv[0]) == 0)
+    if (has_name(argv, pathname, filename) && remove(pathname) == 0)
         return 1;
     return 0;
 }
 
-int has_name(char *argv[], char *pathname, char *filename)
+// Should to add const char *
+int has_name(char *argv[], char *pathname, const char *filename)
 {
-    UNUSED(filename);
+    UNUSED(pathname);
+    int offset = remove_ds(filename);
 
-    if (fnmatch(pathname, argv[0], FNM_PATHNAME) == 0)
+    if (fnmatch(argv[0], filename + offset, FNM_PATHNAME) == 0)
         return 1;
     return 0;
+}
+
+int has_type(char *argv[], char *pathname, const char *filename)
+{
+
+    UNUSED(pathname);
+    UNUSED(filename);
+
+    if (argv[0][0] == 'd')
+    {
+        if (1)
+            return 1;
+    }
+
+    return 1;
 }

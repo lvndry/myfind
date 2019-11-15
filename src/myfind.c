@@ -106,13 +106,18 @@ void format_path(char *path)
         path[strlen(path) - 1] = '\0';
 }
 
+void print_or_not(struct ast *ast, char *pathname, char *filenmae)
+{
+    if (evaluate(ast, pathname, filenmae))
+        printf("%s\n", pathname);
+}
+
 int ls(char *path, struct ast *ast)
 {
     DIR *dir = opendir(path);
     if (dir == NULL)
     {
-        if (evaluate(ast, path, ""))
-            printf("%s\n", path);
+        print_or_not(ast, path, path);
         if(access(path, R_OK) == -1)
         {
             fprintf(stderr, "myfind: %s: %s\n", path, strerror(errno));
@@ -124,15 +129,16 @@ int ls(char *path, struct ast *ast)
     struct dirent *file;
     char filename[PATH_MAX];
 
-    if (!options.d && evaluate(ast, path, ""))
-        printf("%s\n", path);
+    if (!options.d)
+        print_or_not(ast, path, path);
 
     file = readdir(dir);
-    if (file == NULL && evaluate(ast, path, ""))
+    if (file == NULL)
     {
-        printf("%s\n", path);
+        print_or_not(ast, path, path);
         return 1;
     }
+
     do
     {
         char *dname = file->d_name;
@@ -146,14 +152,13 @@ int ls(char *path, struct ast *ast)
             }
             else
             {
-                if (evaluate(ast, filename, dname))
-                    printf("%s\n", filename);
+                print_or_not(ast, filename, dname);
             }
         }
     } while ((file = readdir(dir)) != NULL);
 
     if (options.d)
-        printf("%s\n", path);
+        print_or_not(ast, path, path);
 
     return closedir(dir);
 }

@@ -229,3 +229,12 @@ struct token parse_print(char *argv[], int* cursor)
     struct token token = { PRINT, { NULL } };
     return token;
 }
+
+ struct token parse_type(char *argv[], int *cursor)
+ {
+     UNUSED(argv);
+
+     // handle error if next argv is not valid (if not present or if starts with -)
+     struct token token = { TYPE, { argv[*cursor + 1] } };
+     return token;
+ }
