@@ -44,4 +44,6 @@ int has_perm(char *argv[], char *pathname, char *filename);
 int execute(char *argv[], char *pathnmae, char *filename);
 int executedir(char *argv[], char *pathnmae, char *filename);
 
+extern int shouldprint;
+
 #endif

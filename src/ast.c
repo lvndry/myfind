@@ -17,6 +17,7 @@
 
 #define TREE_SIZE 50
 
+int shouldprint = 0;
 struct ast *tree[TREE_SIZE] = { NULL };
 int treetop = 0;
 
@@ -149,14 +150,14 @@ struct ast *constructTree(struct token postfix[])
         i++;
     }
     parent = pop_node();
-    inorder(parent);
+    // inorder(parent);
     return parent;
 }
 
 int evaluate(struct ast* ast, char *pathname, char *filename)
 {
     if (ast == NULL)
-        return 1;
+        return 0;
 
     int len = sizeof(expressions) / sizeof(expressions[0]);
     int i = 0;
@@ -168,7 +169,7 @@ int evaluate(struct ast* ast, char *pathname, char *filename)
         case AND:
             return evaluate(ast->left, pathname, filename) && evaluate(ast->right, pathname, filename);
         case NOT:
-            return !(evaluate(ast->left, pathname, filename) && evaluate(ast->right, pathname, filename));
+            return !evaluate(ast->right, pathname, filename);
         default:
             for (i = 0; i < len; i++)
             {
@@ -181,7 +182,7 @@ int evaluate(struct ast* ast, char *pathname, char *filename)
         break;
     }
 
-    return 1;
+    return 0;
 }
 
 int is_newer(char *argv[], char *pathname, char *filenname)
@@ -193,25 +194,26 @@ int is_newer(char *argv[], char *pathname, char *filenname)
     struct timespec timearg = statbuff.st_mtim;
     stat(pathname, &statbuff);
     struct timespec timepath = statbuff.st_mtim;
-
+    shouldprint = 1;
     // TODO: check why tv_nsec does not work
     return timepath.tv_sec > timearg.tv_sec;
 }
 
 int print(char *argv[], char *pathname, char *filename)
 {
+    shouldprint = 0;
     UNUSED(argv);
     UNUSED(filename);
 
     if (argv[0] != NULL)
         return 1;
-
     printf("%s\n", pathname);
     return 1;
 }
 
 int group_own(char *argv[], char *pathname, char *filename)
 {
+    shouldprint = 1;
     UNUSED(filename);
 
     struct group *group = getgrnam(argv[0]);
@@ -219,12 +221,12 @@ int group_own(char *argv[], char *pathname, char *filename)
         return 0;
     struct stat statbuff;
     stat(pathname, &statbuff);
-
     return group->gr_gid == statbuff.st_gid;
 }
 
 int user_own(char *argv[], char *pathname, char *filename)
 {
+    shouldprint = 1;
     UNUSED(filename);
 
     struct passwd *user = getpwnam(argv[0]);
@@ -235,21 +237,11 @@ int user_own(char *argv[], char *pathname, char *filename)
     return user->pw_uid == statbuff.st_uid;
 }
 
-int rm(char *argv[], char *pathname, char *filename)
-{
-    UNUSED(argv);
-    UNUSED(filename);
-    if (remove(pathname) == 0)
-        return 1;
-    return 0;
-}
-
 int has_name(char *argv[], char *pathname, char *filename)
 {
     UNUSED(pathname);
     int offset = remove_ds(filename);
 
-    // printf("filename: %s - fnmatch %d\n", pathname, fnmatch(argv[0], filename + offset, FNM_PATHNAME));
     if (fnmatch(argv[0], filename + offset, FNM_PATHNAME) == 0)
         return 1;
     return 0;
@@ -287,6 +279,7 @@ int has_type(char *argv[], char *pathname, char *filename)
 
 int has_perm(char *argv[], char *pathname, char *filename)
 {
+    shouldprint = 1;
     UNUSED(pathname);
 
     struct stat buf;
@@ -341,8 +334,21 @@ int has_perm(char *argv[], char *pathname, char *filename)
     // else error
 }
 
+int rm(char *argv[], char *pathname, char *filename)
+{
+    shouldprint = 0;
+    UNUSED(argv);
+    UNUSED(filename);
+
+
+    if (remove(pathname) == 0)
+        return 1;
+    return 0;
+}
+
 int execute(char *argv[], char *pathname, char *filename)
 {
+    shouldprint = 0;
     UNUSED(filename);
 
     char *ptr;
@@ -378,17 +384,18 @@ int execute(char *argv[], char *pathname, char *filename)
     }
     else if (pid == 0)
     {
-        return execvp(args[0], args);
+        execvp(args[0], args);
+        return 0;
     }
     else
     {
-        int status = 0;
+        int status;
         waitpid(pid, &status, 0);
         if (template != NULL)
             free(template);
         free(args);
 
-        return WEXITED;
+        return !WEXITSTATUS(status);
     }
 
     if (template != NULL)
@@ -400,8 +407,8 @@ int execute(char *argv[], char *pathname, char *filename)
 
 int executedir(char *argv[], char *pathname, char *filename)
 {
+    shouldprint = 0;
     UNUSED(pathname);
-
     char *ptr;
     char **args = malloc(100 * sizeof(char));
     int i = 0;
@@ -439,12 +446,12 @@ int executedir(char *argv[], char *pathname, char *filename)
     }
     else
     {
-        int status = 0;
+        int status;
         waitpid(pid, &status, 0);
         if (template != NULL)
             free(template);
         free(args);
-        return WEXITED;
+        return WEXITSTATUS(status);
     }
 
     if (template != NULL)

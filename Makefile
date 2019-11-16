@@ -15,5 +15,7 @@ all: myfind
 $(BIN): $(OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
+check: ./tests/test.sh
+
 clean:
 	$(RM) $(OBJS) $(BIN) *.swp *.log

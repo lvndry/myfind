@@ -3,6 +3,7 @@
         "cerrno": "c",
         "fcntl.h": "c",
         "stdlib.h": "c",
-        "ast.h": "c"
+        "ast.h": "c",
+        "dirent.h": "c"
     }
 }
