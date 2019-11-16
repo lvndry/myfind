@@ -79,7 +79,7 @@ int getPrecedence(enum token_type type)
         return 3;
     else if (type == NOT)
         return 4;
-    return 0;
+    return 0; // Should return error
 }
 
 void push_operand(struct token token)
@@ -250,32 +250,33 @@ struct token parse_print(char *argv[], int* cursor)
     return token;
 }
 
- struct token parse_type(char *argv[], int *cursor)
- {
-     char **value = malloc(sizeof(argv[*cursor + 1]));
-     value[0] = argv[*cursor + 1];
-     // handle error if next argv is not valid (if not present or if starts with -)
-     struct token token = { TYPE, value };
-     return token;
- }
+struct token parse_type(char *argv[], int *cursor)
+{
+    char **value = malloc(sizeof(argv[*cursor + 1]));
+    value[0] = argv[*cursor + 1];
+    // handle error if next argv is not valid (if not present or if starts with -)
+    *cursor += 1;
+    struct token token = { TYPE, value };
+    return token;
+}
 
- struct token parse_newer(char *argv[], int *cursor)
- {
-     char **value = malloc(sizeof(argv[*cursor + 1]));
-     value[0] = argv[*cursor + 1];
-     // handle error if next argv is not valid (if not present or if starts with -)
-     struct token token = { NEWER, value };
-     *cursor += 1;
-     return token;
- }
+struct token parse_newer(char *argv[], int *cursor)
+{
+    char **value = malloc(sizeof(argv[*cursor + 1]));
+    value[0] = argv[*cursor + 1];
+    // handle error if next argv is not valid (if not present or if starts with -)
+    *cursor += 1;
+    struct token token = { NEWER, value };
+    return token;
+}
 
 struct token parse_perm(char *argv[], int *cursor)
 {
     char **value = malloc(sizeof(argv[*cursor + 1]));
     value[0] = argv[*cursor + 1];
     // handle error if next argv is not valid (if not present or if starts with -)
-    struct token token = { PERM, value };
     *cursor += 1;
+    struct token token = { PERM, value };
     return token;
 }
 
@@ -284,9 +285,8 @@ struct token parse_group(char *argv[], int *cursor)
     char **value = malloc(sizeof(argv[*cursor + 1]));
     value[0] = argv[*cursor + 1];
     // handle error if next argv is not valid (if not present or if starts with -)
-    struct token token = { GROUP, value };
     *cursor += 1;
-
+    struct token token = { GROUP, value };
     return token;
 }
 
@@ -295,9 +295,8 @@ struct token parse_user(char *argv[], int *cursor)
     char **value = malloc(sizeof(argv[*cursor + 1]));
     value[0] = argv[*cursor + 1];
     // handle error if next argv is not valid (if not present or if starts with -)
-    struct token token = { USER, value };
     *cursor += 1;
-
+    struct token token = { USER, value };
     return token;
 }
 
@@ -318,6 +317,7 @@ struct token parse_exec(char *argv[], int *cursor)
         perror("Malloc fail");
         exit(EXIT_FAILURE);
     }
+
     int i;
     *cursor += 1;
 
@@ -333,6 +333,8 @@ struct token parse_exec(char *argv[], int *cursor)
 
     // TODO: if argv[*cursor] == NULL throw error
     value[i] = NULL;
+
+    *cursor += i;
 
     struct token token = { EXEC, value };
     return token;
@@ -361,6 +363,8 @@ struct token parse_execdir(char *argv[], int *cursor)
 
     // TODO: if argv[*cursor] == NULL throw error
     value[i] = NULL;
+
+    *cursor += i;
 
     struct token token = { EXECDIR, value };
     return token;

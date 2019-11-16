@@ -108,8 +108,7 @@ void format_path(char *path)
 
 void print_evaluate(struct ast *ast, char *pathname, char *filenmae)
 {
-    int status = evaluate(ast, pathname, filenmae);
-    if (status != 0 && status != 2)
+    if (evaluate(ast, pathname, filenmae) == 1)
         printf("%s\n", pathname);
 }
 

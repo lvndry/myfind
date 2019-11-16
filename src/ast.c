@@ -149,7 +149,7 @@ struct ast *constructTree(struct token postfix[])
         i++;
     }
     parent = pop_node();
-    // inorder(parent);
+    inorder(parent);
     return parent;
 }
 
@@ -201,7 +201,6 @@ int is_newer(char *argv[], char *pathname, char *filenname)
 int print(char *argv[], char *pathname, char *filename)
 {
     UNUSED(argv);
-    UNUSED(pathname);
     UNUSED(filename);
 
     if (argv[0] != NULL)
@@ -286,29 +285,50 @@ int has_type(char *argv[], char *pathname, char *filename)
     return 1;
 }
 
-
 int has_perm(char *argv[], char *pathname, char *filename)
 {
     UNUSED(pathname);
 
     struct stat buf;
     stat(filename, &buf);
-    int statchmod = buf.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
+
+    __mode_t statchmod = buf.st_mode & MODE_ALL;
 
     if (argv[0][0] == '-')
     {
-        char *cpy = argv[0] + 1;
-        int argmode = atoi(cpy);
+        char *cpy = *argv + 1;
+        __mode_t argmode = atoi(cpy);
         int octmod = toOctal(statchmod);
-
-        UNUSED(argmode);
-        UNUSED(octmod);
-
-        return 1;
+        return (octmod & argmode) == argmode;
     }
     else if (argv[0][0] == '/')
     {
-        return 1;
+        // Check every bytes and see if a user can do it
+        char *cpy = *argv + 1;
+        __mode_t argmode = atoi(cpy);
+        __mode_t bit1 = cpy[0] - '0';
+        __mode_t bit2 = cpy[1] - '0';
+        __mode_t bit3 = cpy[2] - '0';
+
+        if (
+            (statchmod & S_IRUSR) == bit1
+            || (statchmod & S_IRGRP) == bit1
+            || ( statchmod & S_IROTH) == bit1
+        )
+            return 1;
+        if (
+            (statchmod & S_IWUSR) == bit2
+            || (statchmod & S_IWGRP) == bit2
+            ||  (statchmod & S_IXGRP) == bit2
+        )
+            return 1;
+        if (
+            (statchmod & S_IXUSR) == bit3
+            || (statchmod & S_IRGRP) == bit3
+            ||  (statchmod & S_IXOTH) == bit3
+        )
+            return 1;
+        return (statchmod & argmode) != 0;
     }
     else if (isNumeric(argv[0]))
     {
@@ -358,13 +378,17 @@ int execute(char *argv[], char *pathname, char *filename)
     }
     else if (pid == 0)
     {
-        execvp(args[0], args);
-        exit(0);
+        return execvp(args[0], args);
     }
     else
     {
         int status = 0;
         waitpid(pid, &status, 0);
+        if (template != NULL)
+            free(template);
+        free(args);
+
+        return WEXITED;
     }
 
     if (template != NULL)
@@ -411,13 +435,16 @@ int executedir(char *argv[], char *pathname, char *filename)
     }
     else if (pid == 0)
     {
-        execvp(args[0], args);
-        exit(0);
+        return execvp(args[0], args);
     }
     else
     {
         int status = 0;
         waitpid(pid, &status, 0);
+        if (template != NULL)
+            free(template);
+        free(args);
+        return WEXITED;
     }
 
     if (template != NULL)
