@@ -1,6 +1,8 @@
 #ifndef PARSE_H
 #define PARSE_H
 
+#define VALUE_SIZE 100
+
 struct parser {
     char *value;
     struct token (*func)(char *argv[], int* cursor);
@@ -32,7 +34,7 @@ enum token_type
 
 struct token {
     enum token_type type;
-    char *value[100];
+    char **value;
 };
 
 struct token *parse(char *argv[], int start, int end);
@@ -52,6 +54,8 @@ struct token parse_perm(char *argv[], int *cursor);
 struct token parse_group(char *argv[], int *cursor);
 struct token parse_user(char *argv[], int *cursor);
 struct token parse_delete(char *argv[], int *cursor);
+struct token parse_exec(char *argv[], int *cursor);
+struct token parse_execdir(char *argv[], int *cursor);
 
 // operators/operands stack management functions
 void push_operator(struct token token);

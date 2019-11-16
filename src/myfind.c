@@ -108,7 +108,8 @@ void format_path(char *path)
 
 void print_evaluate(struct ast *ast, char *pathname, char *filenmae)
 {
-    if (evaluate(ast, pathname, filenmae))
+    int status = evaluate(ast, pathname, filenmae);
+    if (status != 0 && status != 2)
         printf("%s\n", pathname);
 }
 
@@ -117,12 +118,15 @@ int ls(char *path, struct ast *ast)
     DIR *dir = opendir(path);
     if (dir == NULL)
     {
-        print_evaluate(ast, path, path);
         if(access(path, R_OK) == -1)
         {
             fprintf(stderr, "myfind: %s: %s\n", path, strerror(errno));
+            if (options.d)
+                print_evaluate(ast, path, path);
             return 1;
         }
+        if (options.d)
+            print_evaluate(ast, path, path);
         return 0;
     }
 
@@ -150,7 +154,8 @@ int ls(char *path, struct ast *ast)
             getStat(filename);
             if (S_ISDIR(statbuff.st_mode))
             {
-                print_evaluate(ast, filename, dname);
+                if (!options.d && strstr(filename, dname) == NULL)
+                    print_evaluate(ast, filename, dname);
                 ls(filename, ast);
             }
             else
@@ -168,13 +173,8 @@ int ls(char *path, struct ast *ast)
 
 void myfind(char *path, struct ast *ast)
 {
-    if (islink(path))
-    {
-        if (options.p)
-            printf("%s\n", path);
-        else
-            ls(path, ast);
-    }
+    if (islink(path) && options.p)
+        printf("%s\n", path);
     else
         ls(path, ast);
 }
@@ -185,8 +185,6 @@ int main(int argc, char **argv)
     int optend = setOptions(1, argc, argv);
     int pathend = getPaths(optend + 1, argc, argv);
     struct token *tokens = parse(argv, pathend + 1, argc);
-    // for (int i = 0; i < 4; i++)
-    //     printf("{ %d, %s }\n", tokens[i].type, tokens[i].value[0]);
     struct ast *ast = constructTree(tokens);
 
     if (pathend - optend > 0)
@@ -203,5 +201,6 @@ int main(int argc, char **argv)
         myfind(path, ast);
     }
 
+    free_ast(ast);
     return 0;
 }

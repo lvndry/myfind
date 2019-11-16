@@ -52,3 +52,29 @@ int toOctal(int decimal)
 
     return octalnum;
 }
+
+char *create_template(char *template, char *arg, char *ptr, char *pathname, int isDir)
+{
+    strncat(template, arg, ptr - arg);
+    template[ptr - arg] = '\0';
+
+    if (isDir)
+    {
+        strcat(template, "./");
+        char *lsl = strrchr(pathname, '/');
+        if (lsl == NULL)
+            strcat(template, pathname);
+        else
+        {
+            lsl += 1;
+            strcat(template, lsl);
+        }
+    }
+    else
+        strcat(template, pathname);
+
+    ptr += 2;
+    strcat(template, ptr);
+
+    return template;
+}

@@ -1,4 +1,5 @@
 #define _DEFAULT_SOURCE
+#include <errno.h>
 #include <fcntl.h>
 #include <fnmatch.h>
 #include <grp.h>
@@ -8,7 +9,8 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <errno.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 #include "ast.h"
 #include "utils.h"
@@ -55,10 +57,18 @@ struct expression expressions[] = {
         .type = GROUP,
         .function = group_own,
     },
-        {
+    {
         .type = USER,
         .function = user_own,
     },
+    {
+        .type = EXEC,
+        .function = execute,
+    },
+    {
+        .type = EXECDIR,
+        .function = executedir,
+    }
 };
 
 void push_node(struct ast *node)
@@ -80,6 +90,17 @@ struct ast *create_node(struct token token)
     ast->token = token;
 
     return ast;
+}
+
+void free_ast(struct ast *root)
+{
+    if (root == NULL)
+        return;
+
+    free(root->token.value);
+    free_ast(root->left);
+    free_ast(root->right);
+    free(root);
 }
 
 int isParent(enum token_type type)
@@ -138,22 +159,25 @@ int evaluate(struct ast* ast, char *pathname, char *filename)
         return 1;
 
     int len = sizeof(expressions) / sizeof(expressions[0]);
+    int i = 0;
+
     switch (ast->token.type)
     {
         case OR:
             return evaluate(ast->left, pathname, filename) || evaluate(ast->right, pathname, filename);
         case AND:
-            return evaluate(ast->left, pathname, filename) || evaluate(ast->right, pathname, filename);
+            return evaluate(ast->left, pathname, filename) && evaluate(ast->right, pathname, filename);
         case NOT:
             return !(evaluate(ast->left, pathname, filename) && evaluate(ast->right, pathname, filename));
         default:
-            for (int i = 0; i < len; i++)
+            for (i = 0; i < len; i++)
             {
                 if (expressions[i].type == ast->token.type)
                 {
                     return expressions[i].function(ast->token.value, pathname, filename);
                 }
             }
+            // TODO: if i == len throw error
         break;
     }
 
@@ -170,18 +194,21 @@ int is_newer(char *argv[], char *pathname, char *filenname)
     stat(pathname, &statbuff);
     struct timespec timepath = statbuff.st_mtim;
 
+    // TODO: check why tv_nsec does not work
     return timepath.tv_sec > timearg.tv_sec;
 }
 
 int print(char *argv[], char *pathname, char *filename)
 {
-    UNUSED(argv);
-    UNUSED(pathname);
     UNUSED(filename);
+
+    if (argv[0] != NULL)
+        return 1;
+
+    printf("%s\n", pathname);
     return 1;
 }
 
-// In myfind use https://linux.die.net/man/3/getgrnam to get given gid of group
 int group_own(char *argv[], char *pathname, char *filename)
 {
     UNUSED(filename);
@@ -191,30 +218,27 @@ int group_own(char *argv[], char *pathname, char *filename)
         return 0;
     struct stat statbuff;
     stat(pathname, &statbuff);
-    printf("user->pw_uid: %d - statbuff.st_gid: %d\n", group->gr_gid, statbuff.st_gid);
 
     return group->gr_gid == statbuff.st_gid;
 }
 
-// Use https://pubs.opengroup.org/onlinepubs/7908799/xsh/getpwnam.html to get uid from login
-int user_own(char *argv[], char *uid, char *filename)
+int user_own(char *argv[], char *pathname, char *filename)
 {
-    UNUSED(uid);
     UNUSED(filename);
 
     struct passwd *user = getpwnam(argv[0]);
     if (user == NULL)
         return 0;
     struct stat statbuff;
-    stat(argv[0], &statbuff);
-    printf("user->pw_uid: %d - statbuff.st_uid: %d\n", user->pw_uid, statbuff.st_uid);
-    return user->pw_gid == statbuff.st_uid;
+    stat(pathname, &statbuff);
+    return user->pw_uid == statbuff.st_uid;
 }
 
 int rm(char *argv[], char *pathname, char *filename)
 {
     UNUSED(argv);
     UNUSED(filename);
+
     if (remove(pathname) == 0)
         return 1;
     return 0;
@@ -225,7 +249,6 @@ int has_name(char *argv[], char *pathname, char *filename)
     UNUSED(pathname);
     int offset = remove_ds(filename);
 
-    // printf("filename: %s - fnmatch %d\n", pathname, fnmatch(argv[0], filename + offset, FNM_PATHNAME));
     if (fnmatch(argv[0], filename + offset, FNM_PATHNAME) == 0)
         return 1;
     return 0;
@@ -254,7 +277,7 @@ int has_type(char *argv[], char *pathname, char *filename)
             return S_ISFIFO(statbuff.st_mode);
         case 's':
             return S_ISSOCK(statbuff.st_mode);
-        default:
+        default: // TODO: Throw error
             fprintf(stderr, "myfind: Invalid type argument");
             exit(EXIT_FAILURE);
     }
@@ -265,8 +288,6 @@ int has_type(char *argv[], char *pathname, char *filename)
 int has_perm(char *argv[], char *pathname, char *filename)
 {
     UNUSED(pathname);
-    UNUSED(filename);
-    UNUSED(argv);
 
     struct stat buf;
     stat(filename, &buf);
@@ -296,4 +317,110 @@ int has_perm(char *argv[], char *pathname, char *filename)
 
     return 0;
     // else error
+}
+
+int execute(char *argv[], char *pathname, char *filename)
+{
+    UNUSED(filename);
+
+    char *ptr;
+    char **args = malloc(100 * sizeof(char));
+    int i = 0;
+    char *template = NULL;
+
+    for (i = 0; argv[i] != NULL; i++)
+    {
+        // TODO: Handle several {} in same argv
+        if ((ptr = strstr(argv[i], "{}")) != NULL)
+        {
+            template = malloc(sizeof(char) * (sizeof(argv[i]) + sizeof(pathname)) + 1000);
+            template[0] = 0;
+            if (template == NULL)
+            {
+                perror("Malloc fail");
+                exit(EXIT_FAILURE);
+            }
+            args[i] = create_template(template, argv[i], ptr, pathname, 0);
+        }
+        else
+            args[i] = argv[i];
+    }
+
+    args[i] = NULL;
+
+    pid_t pid = fork();
+    if (pid == -1)
+    {
+        fprintf(stderr, "./myfind: %s\n", strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+    else if (pid == 0)
+    {
+        execvp(args[0], args);
+        exit(0);
+    }
+    else
+    {
+        int status = 0;
+        waitpid(pid, &status, 0);
+    }
+
+    if (template != NULL)
+        free(template);
+    free(args);
+
+    return 0;
+}
+
+int executedir(char *argv[], char *pathname, char *filename)
+{
+    UNUSED(pathname);
+
+    char *ptr;
+    char **args = malloc(100 * sizeof(char));
+    int i = 0;
+    char *template = NULL;
+
+    for (i = 0; argv[i] != NULL; i++)
+    {
+        // TODO: Handle several {} in same argv
+        if ((ptr = strstr(argv[i], "{}")) != NULL)
+        {
+            template = malloc(sizeof(char) * (sizeof(argv[i]) + sizeof(filename)) + 1000);
+            template[0] = 0;
+            if (template == NULL)
+            {
+                perror("Malloc fail");
+                exit(EXIT_FAILURE);
+            }
+            args[i] = create_template(template, argv[i], ptr, filename, 1);
+        }
+        else
+            args[i] = argv[i];
+    }
+
+    args[i] = NULL;
+
+    pid_t pid = fork();
+    if (pid == -1)
+    {
+        fprintf(stderr, "./myfind: %s\n", strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+    else if (pid == 0)
+    {
+        execvp(args[0], args);
+        exit(0);
+    }
+    else
+    {
+        int status = 0;
+        waitpid(pid, &status, 0);
+    }
+
+    if (template != NULL)
+        free(template);
+    free(args);
+
+    return 0;
 }

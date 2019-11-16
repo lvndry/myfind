@@ -30,6 +30,7 @@ struct ast *pop_node();
 void remove_node(struct ast *ast);
 struct ast *constructTree(struct token postfix[]);
 int evaluate(struct ast* ast, char *pathname, char *filename);
+void free_ast(struct ast *root);
 
 // Evaluation functions
 int is_newer(char *argv[], char *timestamp, char *filename);
@@ -40,5 +41,7 @@ int rm(char *argv[], char *placeholder, char *filename);
 int has_name(char *argv[], char *name, char *filename);
 int has_type(char *argv[], char *pathname, char *filename);
 int has_perm(char *argv[], char *pathname, char *filename);
+int execute(char *argv[], char *pathnmae, char *filename);
+int executedir(char *argv[], char *pathnmae, char *filename);
 
 #endif
