@@ -8,7 +8,7 @@ BIN= myfind
 
 .PHONY: all myfind
 
-rebuild: clean all
+# rebuild: clean all
 
 all: myfind
 
