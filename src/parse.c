@@ -73,12 +73,12 @@ int getPrecedence(enum token_type type)
         return 1;
     if (type == PAREN_C)
         return 1;
-    else if (type == AND)
-        return 2;
     else if (type == OR)
         return 2;
-    else if (type == NOT)
+    else if (type == AND)
         return 3;
+    else if (type == NOT)
+        return 4;
     return 0;
 }
 
@@ -331,9 +331,8 @@ struct token parse_exec(char *argv[], int *cursor)
         value[i] = argv[*cursor + i];
     }
 
-    // TODO: if argv[*cursor + i] == NULL throw error
+    // TODO: if argv[*cursor] == NULL throw error
     value[i] = NULL;
-    *cursor += i + 1;
 
     struct token token = { EXEC, value };
     return token;
@@ -360,9 +359,8 @@ struct token parse_execdir(char *argv[], int *cursor)
         value[i] = argv[*cursor + i];
     }
 
-    // TODO: if argv[*cursor + i] == NULL throw error
+    // TODO: if argv[*cursor] == NULL throw error
     value[i] = NULL;
-    *cursor += i + 1;
 
     struct token token = { EXECDIR, value };
     return token;
