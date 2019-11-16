@@ -200,6 +200,8 @@ int is_newer(char *argv[], char *pathname, char *filenname)
 
 int print(char *argv[], char *pathname, char *filename)
 {
+    UNUSED(argv);
+    UNUSED(pathname);
     UNUSED(filename);
 
     if (argv[0] != NULL)
@@ -238,7 +240,6 @@ int rm(char *argv[], char *pathname, char *filename)
 {
     UNUSED(argv);
     UNUSED(filename);
-
     if (remove(pathname) == 0)
         return 1;
     return 0;
@@ -249,6 +250,7 @@ int has_name(char *argv[], char *pathname, char *filename)
     UNUSED(pathname);
     int offset = remove_ds(filename);
 
+    // printf("filename: %s - fnmatch %d\n", pathname, fnmatch(argv[0], filename + offset, FNM_PATHNAME));
     if (fnmatch(argv[0], filename + offset, FNM_PATHNAME) == 0)
         return 1;
     return 0;
