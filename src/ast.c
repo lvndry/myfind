@@ -239,6 +239,7 @@ int user_own(char *argv[], char *pathname, char *filename)
 
 int has_name(char *argv[], char *pathname, char *filename)
 {
+    shouldprint = 1;
     UNUSED(pathname);
     int offset = remove_ds(filename);
 
@@ -249,6 +250,7 @@ int has_name(char *argv[], char *pathname, char *filename)
 
 int has_type(char *argv[], char *pathname, char *filename)
 {
+    shouldprint = 1;
     UNUSED(filename);
 
     struct stat statbuff;
