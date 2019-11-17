@@ -5,11 +5,13 @@
 
 #include "parse.h"
 #include "utils.h"
+#include "errors.h"
 
 #define SIZE 50
 
 struct parser parse_table[] = {
-    // Operators
+
+    // operators
     {"-o", parse_or},
     {"or", parse_or},
     {"OR", parse_or},
@@ -21,14 +23,16 @@ struct parser parse_table[] = {
     {"!", parse_not},
     {"NOT", parse_not},
 
-    // Operands
+    // tests
     {"-name", parse_name},
-    {"-print", parse_print},
     {"-type", parse_type},
     {"-newer", parse_newer},
     {"-perm", parse_perm},
     {"-group", parse_group},
     {"-user", parse_user},
+
+    // actions
+    {"-print", parse_print},
     {"-delete", parse_delete},
     {"-exec", parse_exec},
     {"-execdir", parse_execdir},
@@ -129,7 +133,7 @@ struct token *parse(char *argv[], int start, int end)
             {
                 if (strcmp(argv[cursor], "(") == 0)
                 {
-                    struct token token = { PAREN_O, NULL };
+                    struct token token = { PAREN_O, OPERATOR, NULL };
                     push_operator(token);
                 }
                 else if (strcmp(argv[cursor], ")") == 0)
@@ -142,7 +146,7 @@ struct token *parse(char *argv[], int start, int end)
                 {
                     if (pushand)
                     {
-                        struct token and = { AND, NULL };
+                        struct token and = { AND, OPERATOR, NULL };
                         push_operator(and);
                     }
 
@@ -176,7 +180,7 @@ struct token parse_and(char *argv[], int *cursor)
     UNUSED(argv);
     UNUSED(cursor);
 
-    struct token token = { AND, NULL };
+    struct token token = { AND, OPERATOR, NULL };
     return token;
 }
 
@@ -185,7 +189,7 @@ struct token parse_or(char *argv[], int *cursor)
     UNUSED(argv);
     UNUSED(cursor);
 
-    struct token token = { OR, NULL };
+    struct token token = { OR, OPERATOR, NULL };
     return token;
 }
 
@@ -195,7 +199,7 @@ struct token parse_oparen(char *argv[], int *cursor)
     UNUSED(argv);
     UNUSED(cursor);
 
-    struct token token = { PAREN_O, NULL };
+    struct token token = { PAREN_O, OPERATOR, NULL };
     return token;
 }
 
@@ -204,7 +208,7 @@ struct token parse_cparen(char *argv[], int *cursor)
     UNUSED(argv);
     UNUSED(cursor);
 
-    struct token token = { PAREN_C, NULL };
+    struct token token = { PAREN_C, OPERATOR, NULL };
     return token;
 }
 
@@ -213,28 +217,92 @@ struct token parse_not(char *argv[], int *cursor)
     UNUSED(argv);
     UNUSED(cursor);
 
-    struct token token = { NOT, NULL };
+    struct token token = { NOT, OPERATOR, NULL };
     return token;
 }
 
-// Operand functions
+// tests functions
 
 struct token parse_name(char *argv[], int* cursor)
 {
-    char **value = malloc(sizeof(argv[*cursor + 1]));
-    value[0] = argv[*cursor + 1];
-    // handle error if next argv is not valid (if not present or if starts with -)
-    struct token token = { NAME,  value };
     *cursor += 1;
+    if (argv[*cursor] == NULL)
+        parse_error(CMD_MALFORMED);
+
+    char **value = malloc(sizeof(argv[*cursor]));
+    value[0] = argv[*cursor];
+    struct token token = { NAME, TEST, value };
     return token;
 }
+
+struct token parse_type(char *argv[], int *cursor)
+{
+    *cursor += 1;
+    if (argv[*cursor] == NULL)
+        parse_error(CMD_MALFORMED);
+
+    char **value = malloc(sizeof(argv[*cursor]));
+    value[0] = argv[*cursor];
+    struct token token = { TYPE, TEST, value };
+    return token;
+}
+
+struct token parse_newer(char *argv[], int *cursor)
+{
+    *cursor += 1;
+    if (argv[*cursor] == NULL)
+        parse_error(CMD_MALFORMED);
+
+    char **value = malloc(sizeof(argv[*cursor]));
+    value[0] = argv[*cursor];
+    struct token token = { NEWER, TEST, value };
+    return token;
+}
+
+struct token parse_perm(char *argv[], int *cursor)
+{
+    *cursor += 1;
+    if (argv[*cursor] == NULL)
+        parse_error(CMD_MALFORMED);
+
+    char **value = malloc(sizeof(argv[*cursor]));
+    value[0] = argv[*cursor];
+    struct token token = { PERM, TEST, value };
+    return token;
+}
+
+struct token parse_group(char *argv[], int *cursor)
+{
+    *cursor += 1;
+    if (argv[*cursor] == NULL)
+        parse_error(CMD_MALFORMED);
+
+    char **value = malloc(sizeof(argv[*cursor]));
+    value[0] = argv[*cursor];
+    struct token token = { GROUP, TEST, value };
+    return token;
+}
+
+struct token parse_user(char *argv[], int *cursor)
+{
+    *cursor += 1;
+    if (argv[*cursor] == NULL)
+        parse_error(CMD_MALFORMED);
+
+    char **value = malloc(sizeof(argv[*cursor]));
+    value[0] = argv[*cursor];
+    struct token token = { USER, TEST, value };
+    return token;
+}
+
+// actions functions
 
 struct token parse_print(char *argv[], int* cursor)
 {
     UNUSED(argv);
     UNUSED(cursor);
 
-    char **value = malloc(sizeof(6));
+    char **value = malloc(sizeof(2));
     value[0] = "ignore";
 
     for (int i = 0; i < toppost; i++)
@@ -246,57 +314,7 @@ struct token parse_print(char *argv[], int* cursor)
         }
     }
 
-    struct token token = { PRINT, value };
-    return token;
-}
-
-struct token parse_type(char *argv[], int *cursor)
-{
-    char **value = malloc(sizeof(argv[*cursor + 1]));
-    value[0] = argv[*cursor + 1];
-    // handle error if next argv is not valid (if not present or if starts with -)
-    *cursor += 1;
-    struct token token = { TYPE, value };
-    return token;
-}
-
-struct token parse_newer(char *argv[], int *cursor)
-{
-    char **value = malloc(sizeof(argv[*cursor + 1]));
-    value[0] = argv[*cursor + 1];
-    // handle error if next argv is not valid (if not present or if starts with -)
-    *cursor += 1;
-    struct token token = { NEWER, value };
-    return token;
-}
-
-struct token parse_perm(char *argv[], int *cursor)
-{
-    char **value = malloc(sizeof(argv[*cursor + 1]));
-    value[0] = argv[*cursor + 1];
-    // handle error if next argv is not valid (if not present or if starts with -)
-    *cursor += 1;
-    struct token token = { PERM, value };
-    return token;
-}
-
-struct token parse_group(char *argv[], int *cursor)
-{
-    char **value = malloc(sizeof(argv[*cursor + 1]));
-    value[0] = argv[*cursor + 1];
-    // handle error if next argv is not valid (if not present or if starts with -)
-    *cursor += 1;
-    struct token token = { GROUP, value };
-    return token;
-}
-
-struct token parse_user(char *argv[], int *cursor)
-{
-    char **value = malloc(sizeof(argv[*cursor + 1]));
-    value[0] = argv[*cursor + 1];
-    // handle error if next argv is not valid (if not present or if starts with -)
-    *cursor += 1;
-    struct token token = { USER, value };
+    struct token token = { PRINT, ACTION, value };
     return token;
 }
 
@@ -305,7 +323,7 @@ struct token parse_delete(char *argv[], int *cursor)
     UNUSED(argv);
     UNUSED(cursor);
 
-    struct token token = { DELETE, NULL };
+    struct token token = { DELETE, ACTION, NULL };
     return token;
 }
 
@@ -313,10 +331,7 @@ struct token parse_exec(char *argv[], int *cursor)
 {
     char **value = malloc(VALUE_SIZE * sizeof(char));
     if (value == NULL)
-    {
-        perror("Malloc fail");
-        exit(EXIT_FAILURE);
-    }
+       func_failure("malloc fail");
 
     int i;
     *cursor += 1;
@@ -336,7 +351,7 @@ struct token parse_exec(char *argv[], int *cursor)
 
     *cursor += i;
 
-    struct token token = { EXEC, value };
+    struct token token = { EXEC, ACTION, value };
     return token;
 }
 
@@ -344,10 +359,8 @@ struct token parse_execdir(char *argv[], int *cursor)
 {
     char **value = malloc(VALUE_SIZE * sizeof(char));
     if (value == NULL)
-    {
-        perror("Malloc fail");
-        exit(EXIT_FAILURE);
-    }
+       func_failure("malloc fail");
+
     int i;
     *cursor += 1;
 
@@ -366,6 +379,8 @@ struct token parse_execdir(char *argv[], int *cursor)
 
     *cursor += i;
 
-    struct token token = { EXECDIR, value };
+    struct token token = { EXECDIR, ACTION, value };
     return token;
 }
+
+// struct token parse_execplus(char *argv[], int *cursor)

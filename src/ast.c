@@ -14,41 +14,26 @@
 
 #include "ast.h"
 #include "utils.h"
+#include "errors.h"
 
 #define TREE_SIZE 50
 
-int shouldprint = 0;
 struct ast *tree[TREE_SIZE] = { NULL };
 int treetop = 0;
 
 struct expression expressions[] = {
+    // tests
     {
         .type = NAME,
         .function = has_name,
     },
     {
-        .type = NEWER,
-        .function = is_newer,
-    },
-    {
-        .type = PRINT,
-        .function = print,
-    },
-    {
-        .type = GROUP,
-        .function = group_own,
-    },
-    {
-        .type = USER,
-        .function = user_own,
-    },
-    {
-        .type = DELETE,
-        .function = rm,
-    },
-    {
         .type = TYPE,
         .function = has_type,
+    },
+    {
+        .type = NEWER,
+        .function = is_newer,
     },
     {
         .type = PERM,
@@ -61,6 +46,15 @@ struct expression expressions[] = {
     {
         .type = USER,
         .function = user_own,
+    },
+    // actions
+    {
+        .type = PRINT,
+        .function = print,
+    },
+    {
+        .type = DELETE,
+        .function = rm,
     },
     {
         .type = EXEC,
@@ -77,7 +71,7 @@ void push_node(struct ast *node)
     tree[treetop++] = node;
 }
 
-struct ast *pop_node()
+struct ast *pop_node(void)
 {
     return tree[--treetop];
 }
@@ -86,9 +80,9 @@ struct ast *create_node(struct token token)
 {
     struct ast *ast = malloc(sizeof(struct ast));
 
+    ast->token = token;
     ast->right = NULL;
     ast->left = NULL;
-    ast->token = token;
 
     return ast;
 }
@@ -117,14 +111,15 @@ int isParent(enum token_type type)
 }
 
 // to delete
-void inorder(struct ast *t)
+void inorder(struct ast *node)
 {
-    if (t)
+    if (node)
     {
-        inorder(t->left);
-        printf("%d ", t->token.type);
-        inorder(t->right);
+        inorder(node->left);
+        printf("%d ", node->token.type);
+        inorder(node->right);
     }
+    printf("\n");
 }
 
 struct ast *constructTree(struct token postfix[])
@@ -157,7 +152,10 @@ struct ast *constructTree(struct token postfix[])
 int evaluate(struct ast* ast, char *pathname, char *filename)
 {
     if (ast == NULL)
-        return 0;
+    {
+        shouldprint = 1;
+        return 1;
+    }
 
     int len = sizeof(expressions) / sizeof(expressions[0]);
     int i = 0;
@@ -165,24 +163,45 @@ int evaluate(struct ast* ast, char *pathname, char *filename)
     switch (ast->token.type)
     {
         case OR:
-            return evaluate(ast->left, pathname, filename) || evaluate(ast->right, pathname, filename);
+            if (evaluate(ast->left, pathname, filename))
+                return 1;
+             return evaluate(ast->right, pathname, filename);
+             break;
         case AND:
-            return evaluate(ast->left, pathname, filename) && evaluate(ast->right, pathname, filename);
+            if (evaluate(ast->left, pathname, filename))
+                return evaluate(ast->right, pathname, filename);
+            return 0;
+            break;
         case NOT:
             return !evaluate(ast->right, pathname, filename);
+            break;
         default:
             for (i = 0; i < len; i++)
             {
-                if (expressions[i].type == ast->token.type)
+                if (ast->token.type == expressions[i].type)
                 {
+                    if (ast->token.category == ACTION)
+                        shouldprint = 0;
+                    else
+                        shouldprint = 1;
                     return expressions[i].function(ast->token.value, pathname, filename);
                 }
             }
-            // TODO: if i == len throw error
+            func_failure("./myfind: Invalid expression type");
         break;
     }
+    return 1;
+}
 
-    return 0;
+// Test functions
+
+int print(char *argv[], char *pathname, char *filename)
+{
+    UNUSED(argv);
+    UNUSED(filename);
+
+    printf("%s\n", pathname);
+    return 1;
 }
 
 int is_newer(char *argv[], char *pathname, char *filenname)
@@ -194,26 +213,13 @@ int is_newer(char *argv[], char *pathname, char *filenname)
     struct timespec timearg = statbuff.st_mtim;
     stat(pathname, &statbuff);
     struct timespec timepath = statbuff.st_mtim;
-    shouldprint = 1;
+
     // TODO: check why tv_nsec does not work
     return timepath.tv_sec > timearg.tv_sec;
 }
 
-int print(char *argv[], char *pathname, char *filename)
-{
-    shouldprint = 0;
-    UNUSED(argv);
-    UNUSED(filename);
-
-    if (argv[0] != NULL)
-        return 1;
-    printf("%s\n", pathname);
-    return 1;
-}
-
 int group_own(char *argv[], char *pathname, char *filename)
 {
-    shouldprint = 1;
     UNUSED(filename);
 
     struct group *group = getgrnam(argv[0]);
@@ -221,12 +227,12 @@ int group_own(char *argv[], char *pathname, char *filename)
         return 0;
     struct stat statbuff;
     stat(pathname, &statbuff);
+
     return group->gr_gid == statbuff.st_gid;
 }
 
 int user_own(char *argv[], char *pathname, char *filename)
 {
-    shouldprint = 1;
     UNUSED(filename);
 
     struct passwd *user = getpwnam(argv[0]);
@@ -239,7 +245,6 @@ int user_own(char *argv[], char *pathname, char *filename)
 
 int has_name(char *argv[], char *pathname, char *filename)
 {
-    shouldprint = 1;
     UNUSED(pathname);
     int offset = remove_ds(filename);
 
@@ -250,7 +255,6 @@ int has_name(char *argv[], char *pathname, char *filename)
 
 int has_type(char *argv[], char *pathname, char *filename)
 {
-    shouldprint = 1;
     UNUSED(filename);
 
     struct stat statbuff;
@@ -272,16 +276,15 @@ int has_type(char *argv[], char *pathname, char *filename)
             return S_ISFIFO(statbuff.st_mode);
         case 's':
             return S_ISSOCK(statbuff.st_mode);
-        default: // TODO: Throw error
-            fprintf(stderr, "myfind: Invalid type argument");
-            exit(EXIT_FAILURE);
+        default:
+            func_failure("./myfind: Invalid type argument");
+            break;
     }
     return 1;
 }
 
 int has_perm(char *argv[], char *pathname, char *filename)
 {
-    shouldprint = 1;
     UNUSED(pathname);
 
     struct stat buf;
@@ -336,9 +339,10 @@ int has_perm(char *argv[], char *pathname, char *filename)
     // else error
 }
 
+// Actions functions
+
 int rm(char *argv[], char *pathname, char *filename)
 {
-    shouldprint = 0;
     UNUSED(argv);
     UNUSED(filename);
 
@@ -350,7 +354,6 @@ int rm(char *argv[], char *pathname, char *filename)
 
 int execute(char *argv[], char *pathname, char *filename)
 {
-    shouldprint = 0;
     UNUSED(filename);
 
     char *ptr;
@@ -409,7 +412,6 @@ int execute(char *argv[], char *pathname, char *filename)
 
 int executedir(char *argv[], char *pathname, char *filename)
 {
-    shouldprint = 0;
     UNUSED(pathname);
     char *ptr;
     char **args = malloc(100 * sizeof(char));
@@ -421,13 +423,12 @@ int executedir(char *argv[], char *pathname, char *filename)
         // TODO: Handle several {} in same argv
         if ((ptr = strstr(argv[i], "{}")) != NULL)
         {
-            template = malloc(sizeof(char) * (sizeof(argv[i]) + sizeof(filename)) + 1000);
+            template = malloc(sizeof(char) * ((sizeof(argv[i]) + sizeof(filename)) + 1000));
             template[0] = 0;
+
             if (template == NULL)
-            {
-                perror("Malloc fail");
-                exit(EXIT_FAILURE);
-            }
+                func_failure("Malloc fail");
+
             args[i] = create_template(template, argv[i], ptr, filename, 1);
         }
         else
@@ -444,7 +445,8 @@ int executedir(char *argv[], char *pathname, char *filename)
     }
     else if (pid == 0)
     {
-        return execvp(args[0], args);
+        execvp(args[0], args);
+        return 0;
     }
     else
     {

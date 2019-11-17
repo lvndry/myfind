@@ -106,9 +106,11 @@ void format_path(char *path)
         path[strlen(path) - 1] = '\0';
 }
 
+int shouldprint = 0;
 void print_evaluate(struct ast *ast, char *pathname, char *filenmae)
 {
-    if (evaluate(ast, pathname, filenmae) == 1 && shouldprint == 1)
+    evaluate(ast, pathname, filenmae);
+    if (shouldprint == 1)
         printf("%s\n", pathname);
 }
 
