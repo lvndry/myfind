@@ -10,19 +10,6 @@
 #define SIZE 50
 
 struct parser parse_table[] = {
-
-    // operators
-    {"-o", parse_or},
-    {"or", parse_or},
-    {"OR", parse_or},
-    {"-a", parse_and},
-    {"and", parse_and},
-    {"AND", parse_and},
-    {"(", parse_oparen},
-    {")", parse_cparen},
-    {"!", parse_not},
-    {"NOT", parse_not},
-
     // tests
     {"-name", parse_name},
     {"-type", parse_type},
@@ -36,6 +23,18 @@ struct parser parse_table[] = {
     {"-delete", parse_delete},
     {"-exec", parse_exec},
     {"-execdir", parse_execdir},
+
+    // operators
+    {"-o", parse_or},
+    {"or", parse_or},
+    {"OR", parse_or},
+    {"-a", parse_and},
+    {"and", parse_and},
+    {"AND", parse_and},
+    {"(", parse_oparen},
+    {")", parse_cparen},
+    {"!", parse_not},
+    {"NOT", parse_not},
 };
 
 struct token operators[SIZE];
@@ -47,7 +46,7 @@ int topan = 0;
 int toppost = 0;
 
 /* TO DELETE */
-void print_stacks()
+void print_stacks(void)
 {
     struct token t;
 
@@ -91,7 +90,7 @@ void push_operand(struct token token)
     operands[topan++] = token;
 }
 
-struct token pop_operand()
+struct token pop_operand(void)
 {
     return operands[--topan];
 }
@@ -101,7 +100,7 @@ void push_operator(struct token token)
     operators[topo++] = token;
 }
 
-struct token pop_operator()
+struct token pop_operator(void)
 {
     return operators[--topo];
 }
@@ -158,7 +157,11 @@ struct token *parse(char *argv[], int start, int end)
                 {
                     pushand = false;
                     struct token token = parse_table[i].func(argv, &cursor);
-                    while (topo - 1 >= 0 && getPrecedence(operators[topo - 1].type) >= getPrecedence(token.type))
+                    while (
+                        topo - 1 >= 0 &&
+                        getPrecedence(operators[topo - 1].type)
+                        >= getPrecedence(token.type)
+                    )
                         postfix[toppost++] = pop_operator();
                     push_operator(token);
                 }
@@ -339,19 +342,27 @@ struct token parse_exec(char *argv[], int *cursor)
     for (
         i = 0;
         argv[*cursor + i] != NULL
-        && (argv[*cursor + i][0] != ';' || (argv[*cursor + i][1] != '\0'));
+        && (argv[*cursor + i][0] != ';' || (argv[*cursor + i][1] != '\0'))
+        && (argv[*cursor + i][0] != '+' || (argv[*cursor + i][1] != '\0'));
         i++
     )
     {
         value[i] = argv[*cursor + i];
     }
 
+    struct token token = { EXEC, ACTION, value };
+    if (argv[*cursor + i][0] == '+')
+    {
+        token.type = EXECPLUS;
+        i++;
+    }
+
     // TODO: if argv[*cursor] == NULL throw error
     value[i] = NULL;
 
     *cursor += i;
+    token.value = value;
 
-    struct token token = { EXEC, ACTION, value };
     return token;
 }
 
@@ -382,5 +393,3 @@ struct token parse_execdir(char *argv[], int *cursor)
     struct token token = { EXECDIR, ACTION, value };
     return token;
 }
-
-// struct token parse_execplus(char *argv[], int *cursor)

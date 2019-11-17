@@ -30,5 +30,11 @@ function assert {
   exit $rc
 }
 
+# Basic find
 assert "./myfind ~ and find ~ do not return the same number of lines" test $(./../myfind ~ | wc -l) -eq $(find ~ | wc -l)
+
+# Test of options
 assert "./myfind -L ~ and find -L ~ do not return the same number of lines" test $(./../myfind -L ~ | wc -l) -eq $(find -L ~ | wc -l)
+assert "./myfind -L ~ and find -L ~ do not return the same number of lines" test $(./../myfind -H ~ | wc -l) -eq $(find -H ~ | wc -l)
+assert "./myfind -L ~ and find -L ~ do not return the same number of lines" test $(./../myfind -P ~ | wc -l) -eq $(find -P ~ | wc -l)
+assert "./myfind -L ~ and find -L ~ do not return the same number of lines" test $(./../myfind -PL ~ | wc -l) -eq $(find -PL ~ | wc -l)

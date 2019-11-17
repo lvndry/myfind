@@ -63,6 +63,10 @@ struct expression expressions[] = {
     {
         .type = EXECDIR,
         .function = executedir,
+    },
+    {
+        .type = EXECPLUS,
+        .function = executeplus,
     }
 };
 
@@ -128,6 +132,13 @@ struct ast *constructTree(struct token postfix[])
     struct ast *right;
     struct ast *left;
     int i = 0;
+    int len = 0;
+
+    while (postfix[len].type)
+        len++;
+
+    if (len == 0)
+        return NULL;
 
     while (postfix[i].type)
     {
@@ -149,11 +160,11 @@ struct ast *constructTree(struct token postfix[])
     return parent;
 }
 
-int evaluate(struct ast* ast, char *pathname, char *filename)
+int evaluate(struct ast *ast, struct params *params)
 {
     if (ast == NULL)
     {
-        shouldprint = 1;
+        params->shouldprint = 1;
         return 1;
     }
 
@@ -163,17 +174,17 @@ int evaluate(struct ast* ast, char *pathname, char *filename)
     switch (ast->token.type)
     {
         case OR:
-            if (evaluate(ast->left, pathname, filename))
+            if (evaluate(ast->left, params))
                 return 1;
-             return evaluate(ast->right, pathname, filename);
+             return evaluate(ast->right, params);
              break;
         case AND:
-            if (evaluate(ast->left, pathname, filename))
-                return evaluate(ast->right, pathname, filename);
+            if (evaluate(ast->left, params))
+                return evaluate(ast->right, params);
             return 0;
             break;
         case NOT:
-            return !evaluate(ast->right, pathname, filename);
+            return !evaluate(ast->right, params);
             break;
         default:
             for (i = 0; i < len; i++)
@@ -181,10 +192,11 @@ int evaluate(struct ast* ast, char *pathname, char *filename)
                 if (ast->token.type == expressions[i].type)
                 {
                     if (ast->token.category == ACTION)
-                        shouldprint = 0;
+                        params->shouldprint = 0;
                     else
-                        shouldprint = 1;
-                    return expressions[i].function(ast->token.value, pathname, filename);
+                        params->shouldprint = 1;
+                    params->value = ast->token.value;
+                    return expressions[i].function(params);
                 }
             }
             func_failure("./myfind: Invalid expression type");
@@ -195,72 +207,62 @@ int evaluate(struct ast* ast, char *pathname, char *filename)
 
 // Test functions
 
-int print(char *argv[], char *pathname, char *filename)
+int print(struct params *params)
 {
-    UNUSED(argv);
-    UNUSED(filename);
-
-    printf("%s\n", pathname);
+    printf("%s\n", params->pathname);
     return 1;
 }
 
-int is_newer(char *argv[], char *pathname, char *filenname)
+int is_newer(struct params *params)
 {
-    UNUSED(filenname);
     struct stat statbuff;
 
-    stat(argv[0], &statbuff);
+    stat(params->value[0], &statbuff);
     struct timespec timearg = statbuff.st_mtim;
-    stat(pathname, &statbuff);
+    stat(params->pathname, &statbuff);
     struct timespec timepath = statbuff.st_mtim;
 
     // TODO: check why tv_nsec does not work
     return timepath.tv_sec > timearg.tv_sec;
 }
 
-int group_own(char *argv[], char *pathname, char *filename)
+int group_own(struct params *params)
 {
-    UNUSED(filename);
-
-    struct group *group = getgrnam(argv[0]);
+    struct group *group = getgrnam(params->value[0]);
     if (group == NULL)
         return 0;
     struct stat statbuff;
-    stat(pathname, &statbuff);
+    stat(params->pathname, &statbuff);
 
     return group->gr_gid == statbuff.st_gid;
 }
 
-int user_own(char *argv[], char *pathname, char *filename)
+int user_own(struct params *params)
 {
-    UNUSED(filename);
-
-    struct passwd *user = getpwnam(argv[0]);
+    struct passwd *user = getpwnam(params->value[0]);
     if (user == NULL)
         return 0;
     struct stat statbuff;
-    stat(pathname, &statbuff);
+    stat(params->pathname, &statbuff);
     return user->pw_uid == statbuff.st_uid;
 }
 
-int has_name(char *argv[], char *pathname, char *filename)
+int has_name(struct params *params)
 {
-    UNUSED(pathname);
-    int offset = remove_ds(filename);
+    int offset = remove_ds(params->filename);
 
-    if (fnmatch(argv[0], filename + offset, FNM_PATHNAME) == 0)
+    // printf("fnmatch: %d - params->filename: %s\n", fnmatch(params->value[0], params->filename + offset, FNM_PATHNAME), params->filename + offset);
+    if (fnmatch(params->value[0], params->filename + offset, FNM_PATHNAME) == 0)
         return 1;
     return 0;
 }
 
-int has_type(char *argv[], char *pathname, char *filename)
+int has_type(struct params *params)
 {
-    UNUSED(filename);
-
     struct stat statbuff;
-    lstat(pathname, &statbuff);
+    lstat(params->pathname, &statbuff);
 
-    switch (argv[0][0])
+    switch (params->value[0][0])
     {
         case 'b':
             return S_ISBLK(statbuff.st_mode);
@@ -283,26 +285,24 @@ int has_type(char *argv[], char *pathname, char *filename)
     return 1;
 }
 
-int has_perm(char *argv[], char *pathname, char *filename)
+int has_perm(struct params *params)
 {
-    UNUSED(pathname);
-
     struct stat buf;
-    stat(filename, &buf);
+    stat(params->filename, &buf);
 
     __mode_t statchmod = buf.st_mode & MODE_ALL;
 
-    if (argv[0][0] == '-')
+    if (params->value[0][0] == '-')
     {
-        char *cpy = *argv + 1;
+        char *cpy = *(params->value) + 1;
         __mode_t argmode = atoi(cpy);
         int octmod = toOctal(statchmod);
         return (octmod & argmode) == argmode;
     }
-    else if (argv[0][0] == '/')
+    else if (params->value[0][0] == '/')
     {
         // Check every bytes and see if a user can do it
-        char *cpy = *argv + 1;
+        char *cpy = *(params->value) + 1;
         __mode_t argmode = atoi(cpy);
         __mode_t bit1 = cpy[0] - '0';
         __mode_t bit2 = cpy[1] - '0';
@@ -328,9 +328,9 @@ int has_perm(char *argv[], char *pathname, char *filename)
             return 1;
         return (statchmod & argmode) != 0;
     }
-    else if (isNumeric(argv[0]))
+    else if (isNumeric(params->value[0]))
     {
-        int argmod = atoi(argv[0]);
+        int argmod = atoi(params->value[0]);
         int octmod = toOctal(statchmod);
         return octmod == argmod;
     }
@@ -341,42 +341,45 @@ int has_perm(char *argv[], char *pathname, char *filename)
 
 // Actions functions
 
-int rm(char *argv[], char *pathname, char *filename)
+int rm(struct params *params)
 {
-    UNUSED(argv);
-    UNUSED(filename);
-
-
-    if (remove(pathname) == 0)
+    if (remove(params->pathname) == 0)
         return 1;
     return 0;
 }
 
-int execute(char *argv[], char *pathname, char *filename)
+int execute(struct params *params)
 {
-    UNUSED(filename);
-
     char *ptr;
-    char **args = malloc(100 * sizeof(char));
+    char **args = malloc(sizeof(char) * 100);
     int i = 0;
     char *template = NULL;
 
-    for (i = 0; argv[i] != NULL; i++)
+    for (i = 0; params->value[i] != NULL; ++i)
     {
-        // TODO: Handle several {} in same argv
-        if ((ptr = strstr(argv[i], "{}")) != NULL)
+        // TODO: Handle several {} in same params->value
+        if ((ptr = strstr(params->value[i], "{}")) != NULL)
         {
-            template = malloc(sizeof(char) * (sizeof(argv[i]) + sizeof(pathname)) + 1000);
+            template = malloc(
+                sizeof(char) *
+                (sizeof(params->value[i]) + sizeof(params->pathname)) + 1000
+            );
             template[0] = 0;
             if (template == NULL)
             {
                 perror("Malloc fail");
                 exit(EXIT_FAILURE);
             }
-            args[i] = create_template(template, argv[i], ptr, pathname, 0);
+            args[i] = create_template(
+                template,
+                params->value[i],
+                ptr,
+                params->pathname,
+                0
+            );
         }
         else
-            args[i] = argv[i];
+            args[i] = params->value[i];
     }
 
     args[i] = NULL;
@@ -410,29 +413,37 @@ int execute(char *argv[], char *pathname, char *filename)
     return 0;
 }
 
-int executedir(char *argv[], char *pathname, char *filename)
+int executedir(struct params *params)
 {
-    UNUSED(pathname);
     char *ptr;
-    char **args = malloc(100 * sizeof(char));
+    char **args = malloc(sizeof(char) * 100);
     int i = 0;
     char *template = NULL;
 
-    for (i = 0; argv[i] != NULL; i++)
+    for (i = 0; params->value[i] != NULL; ++i)
     {
-        // TODO: Handle several {} in same argv
-        if ((ptr = strstr(argv[i], "{}")) != NULL)
+        // TODO: Handle several {} in same params->value
+        if ((ptr = strstr(params->value[i], "{}")) != NULL)
         {
-            template = malloc(sizeof(char) * ((sizeof(argv[i]) + sizeof(filename)) + 1000));
+            template = malloc(
+                sizeof(char) *
+                ((sizeof(params->value[i]) + sizeof(params->filename)) + 1000)
+            );
             template[0] = 0;
 
             if (template == NULL)
                 func_failure("Malloc fail");
 
-            args[i] = create_template(template, argv[i], ptr, filename, 1);
+            args[i] = create_template(
+                template,
+                params->value[i],
+                ptr,
+                params->filename,
+                1
+            );
         }
         else
-            args[i] = argv[i];
+            args[i] = params->value[i];
     }
 
     args[i] = NULL;
@@ -461,6 +472,70 @@ int executedir(char *argv[], char *pathname, char *filename)
     if (template != NULL)
         free(template);
     free(args);
+
+    return 0;
+}
+
+// Here I suppose that the exec + is correctly parsed and that
+// I only have to replace the last {} by the list of files
+int executeplus(struct params *params)
+{
+    static size_t sizelen = 0;
+    static int fileslen = 0;
+
+    if (params->filename == NULL)
+    {
+        // exec all
+        char **args = malloc(sizeof(char *)
+        * (100 + sizeof(params->execvalue) + fileslen));
+        int i = 0;
+
+        while (strcmp(params->value[i], "{}") != 0)
+        {
+            args[i] = params->value[i];
+            i++;
+        }
+
+        memcpy(args + i, params->execvalue, sizelen);
+
+        pid_t pid = fork();
+        if (pid == -1)
+        {
+            fprintf(stderr, "./myfind: %s\n", strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+        else if (pid == 0)
+        {
+            execvp(args[0], args);
+            return 0;
+        }
+        else
+        {
+            int status;
+            waitpid(pid, &status, 0);
+            if (params->execvalue != NULL)
+                free(params->execvalue);
+            free(args);
+            params->execvalue = NULL;
+            if (WIFEXITED(status) == 0)
+                return WEXITSTATUS(status);
+            return 0;
+        }
+
+        if (params->execvalue != NULL)
+            free(params->execvalue);
+        free(args);
+    }
+    else
+    {
+        params->execvalue = realloc(
+            params->execvalue,
+            (sizeof(char *) * sizelen) + (sizeof(char *) * strlen(params->pathname) + 1)
+        );
+        params->execvalue[fileslen] = malloc(sizeof(char) * strlen(params->pathname) + 1);
+        params->execvalue[fileslen++] = params->pathname;
+        sizelen += strlen(params->pathname) + 1;
+    }
 
     return 0;
 }

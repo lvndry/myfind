@@ -13,6 +13,12 @@ int islink(const char *path);
 int remove_ds(const char *path);
 int isNumeric(const char *str);
 int toOctal(int decimal);
-char *create_template(char *template, char *arg, char *ptr, char *pathname, int isDir);
+char *create_template(
+    char *template,
+    char *arg,
+    char *ptr,
+    char *pathname,
+    int isDir
+);
 
 #endif

@@ -53,7 +53,13 @@ int toOctal(int decimal)
     return octalnum;
 }
 
-char *create_template(char *template, char *arg, char *ptr, char *pathname, int isDir)
+char *create_template(
+    char *template,
+    char *arg,
+    char *ptr,
+    char *pathname,
+    int isDir
+)
 {
     strncat(template, arg, ptr - arg);
     template[ptr - arg] = '\0';

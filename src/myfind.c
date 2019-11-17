@@ -24,43 +24,40 @@ struct opts_t
     int p;
 };
 
-struct opts_t options = { .d = 0, .h = 0, .l = 0, .p = 1 };
-struct stat statbuff;
-
-int setOptions(int start, int end, char **vector)
+int setOptions(struct opts_t *options, char *argv[], int start, int end)
 {
     for (int i = start; i < end; i++)
     {
-        char *option = vector[i];
+        char *option = argv[i];
         if (option[0] != '-')
             return i - 1;
-        if (strcmp(vector[i], "-d") == 0)
+        if (strcmp(argv[i], "-d") == 0)
         {
-            options.l = 0;
-            options.d = 1;
-            options.h = 0;
-            options.p = 0;
+            options->l = 0;
+            options->d = 1;
+            options->h = 0;
+            options->p = 0;
         }
-        else if (strcmp(vector[i], "-L") == 0)
+        else if (strcmp(argv[i], "-L") == 0)
         {
-            options.l = 1;
-            options.d = 0;
-            options.p = 0;
-            options.h = 0;
+            options->l = 1;
+            options->d = 0;
+            options->p = 0;
+            options->h = 0;
         }
-        else if (strcmp(vector[i], "-P") == 0)
+        else if (strcmp(argv[i], "-P") == 0)
         {
-            options.l = 0;
-            options.d = 0;
-            options.h = 0;
-            options.p = 1;
+            options->l = 0;
+            options->d = 0;
+            options->h = 0;
+            options->p = 1;
         }
-        else if (strcmp(vector[i], "-H") == 0)
+        else if (strcmp(argv[i], "-H") == 0)
         {
-            options.l = 0;
-            options.d = 0;
-            options.h = 1;
-            options.p = 0;
+            options->l = 0;
+            options->d = 0;
+            options->h = 1;
+            options->p = 0;
         }
         else
             return i - 1;
@@ -69,7 +66,7 @@ int setOptions(int start, int end, char **vector)
     return end - 1;
 }
 
-int getPaths(int start, int argc, char **argv)
+int getPaths(char *argv[], int start, int argc)
 {
     for (int i = start; i < argc; i++)
     {
@@ -87,12 +84,12 @@ void getFilename(char *filename, char*path, char *d_name)
         sprintf(filename, "%s/%s", path, d_name);
 }
 
-void getStat(char *filename)
+void getStat(char *filename, struct stat *statbuff, struct opts_t options)
 {
     if (options.l)
-        stat(filename, &statbuff);
+        stat(filename, statbuff);
     else
-        lstat(filename, &statbuff);
+        lstat(filename, statbuff);
 }
 
 int is_valid_name(char *path)
@@ -106,17 +103,34 @@ void format_path(char *path)
         path[strlen(path) - 1] = '\0';
 }
 
-int shouldprint = 0;
-void print_evaluate(struct ast *ast, char *pathname, char *filenmae)
+void setparams(
+    struct params *params,
+    char *pathname,
+    char *filename,
+    char **value,
+    char **execvalue
+)
 {
-    evaluate(ast, pathname, filenmae);
-    if (shouldprint == 1)
+    params->pathname = pathname;
+    params->filename = filename;
+    params->value = value;
+    params->execvalue = execvalue;
+    params->shouldprint = 0;
+}
+
+void print_evaluate(struct ast *ast, char *pathname, char *filename)
+{
+    struct params params = { pathname, filename, NULL, NULL, 0 };
+    int res = evaluate(ast, &params);
+    // printf("res: %d - params.shouldprint: %d\n", res, params.shouldprint);
+    if (res == 1 && params.shouldprint == 1)
         printf("%s\n", pathname);
 }
 
-int ls(char *path, struct ast *ast)
+int ls(char *path, struct ast *ast, struct opts_t options)
 {
     DIR *dir = opendir(path);
+
     if (dir == NULL)
     {
         if(access(path, R_OK) == -1)
@@ -152,12 +166,16 @@ int ls(char *path, struct ast *ast)
         getFilename(filename, path, dname);
         if (is_valid_name(dname))
         {
-            getStat(filename);
+            struct stat statbuff;
+            getStat(filename, &statbuff, options);
             if (S_ISDIR(statbuff.st_mode))
             {
-                if (!options.d && strstr(filename, dname) == NULL)
+                if (
+                    !options.d
+                    && strstr(path, filename) == NULL
+                )
                     print_evaluate(ast, filename, dname);
-                ls(filename, ast);
+                ls(filename, ast, options);
             }
             else
             {
@@ -172,19 +190,20 @@ int ls(char *path, struct ast *ast)
     return closedir(dir);
 }
 
-void myfind(char *path, struct ast *ast)
+void myfind(char *path, struct ast *ast, struct opts_t options)
 {
     if (islink(path) && options.p)
         printf("%s\n", path);
     else
-        ls(path, ast);
+        ls(path, ast, options);
 }
 
 int main(int argc, char **argv)
 {
     char *path;
-    int optend = setOptions(1, argc, argv);
-    int pathend = getPaths(optend + 1, argc, argv);
+    struct opts_t options = { .d = 0, .h = 0, .l = 0, .p = 1 };
+    int optend = setOptions(&options, argv, 1, argc);
+    int pathend = getPaths(argv, optend + 1, argc);
     struct token *tokens = parse(argv, pathend + 1, argc);
     struct ast *ast = constructTree(tokens);
 
@@ -193,13 +212,13 @@ int main(int argc, char **argv)
         for (int i = optend + 1; i <= pathend; i++)
         {
             path = argv[i];
-            myfind(path, ast);
+            myfind(path, ast, options);
         }
     }
     else
     {
         path = ".";
-        myfind(path, ast);
+        myfind(path, ast, options);
     }
 
     free_ast(ast);
