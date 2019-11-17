@@ -1,6 +1,6 @@
 CC= gcc
-CFLAGS= -Wall -Wextra -Werror -pedantic -std=c99 -O3 # -fsanitize=address -g
-# LDFLAGS= -fsanitize=address
+CFLAGS= -Wall -Wextra -Werror -pedantic -std=c99 -O3 -fsanitize=address -g
+LDFLAGS= -fsanitize=address
 VPATH= src
 SRC= myfind.c parse.c ast.c utils.c errors.c
 OBJS= $(SRC:.c=.o)

@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 
+// File manipulation
 int islink(const char *path)
 {
     struct stat buff;
@@ -20,6 +21,7 @@ int remove_ds(const char *path)
     return 0;
 }
 
+// Numerical
 int isNumeric(const char * str)
 {
     if (str == NULL || *str == '\0' || isspace(*str))
@@ -53,6 +55,7 @@ int toOctal(int decimal)
     return octalnum;
 }
 
+// String
 char *create_template(
     char *template,
     char *arg,
@@ -83,4 +86,15 @@ char *create_template(
     strcat(template, ptr);
 
     return template;
+}
+
+int is_valid_name(char *path)
+{
+    return (strcmp(path, ".") != 0 && strcmp(path, "..") != 0);
+}
+
+void format_path(char *path)
+{
+    if (path[strlen(path) - 1] == '/')
+        path[strlen(path) - 1] = '\0';
 }

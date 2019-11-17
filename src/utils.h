@@ -20,5 +20,7 @@ char *create_template(
     char *pathname,
     int isDir
 );
+int is_valid_name(char *path);
+void format_path(char *path);
 
 #endif

@@ -1,9 +1,12 @@
 # TODO
 
-Expressions to still handle
-
 * -exec \+
-* -execdir
+* -perm
+* memory leak
+* coding style
+* -name print either twice or non because of check for options.d in ls
+* execute / executedir could be one function
+* Better error handling
 
 # Enhancement
 

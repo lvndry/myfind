@@ -10,7 +10,8 @@ struct node
     struct node* prev;
 };
 
-struct stack {
+struct stack
+{
     struct node *tail;
     size_t size;
 };

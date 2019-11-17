@@ -92,17 +92,6 @@ void getStat(char *filename, struct stat *statbuff, struct opts_t options)
         lstat(filename, statbuff);
 }
 
-int is_valid_name(char *path)
-{
-    return (strcmp(path, ".") != 0 && strcmp(path, "..") != 0);
-}
-
-void format_path(char *path)
-{
-    if (path[strlen(path) - 1] == '/')
-        path[strlen(path) - 1] = '\0';
-}
-
 void setparams(
     struct params *params,
     char *pathname,
@@ -122,7 +111,7 @@ void print_evaluate(struct ast *ast, char *pathname, char *filename)
 {
     struct params params = { pathname, filename, NULL, NULL, 0 };
     int res = evaluate(ast, &params);
-    // printf("res: %d - params.shouldprint: %d\n", res, params.shouldprint);
+
     if (res == 1 && params.shouldprint == 1)
         printf("%s\n", pathname);
 }
