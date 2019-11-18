@@ -1,23 +1,22 @@
 #ifndef STACK_H
 #define STACK_H
 
+#define CAPACITY 500
+
 #include <stdlib.h>
 
-struct node
-{
-    void *data;
-    struct node *next;
-    struct node* prev;
-};
+#include "parse.h"
 
 struct stack
 {
-    struct node *tail;
-    size_t size;
+    struct token **array;
+    int capcity;
+    int size;
 };
 
-struct stack *init(void);
-void push(struct stack* stack, void *node);
-struct node *pop(struct stack *stack);
+struct stack *create_stack(void);
+void push_stack(struct stack *stack, struct token *node);
+struct token *pop_stack(struct stack *stack);
+void free_stack(struct stack *stack);
 
 #endif

@@ -3,46 +3,43 @@
 #include "stack.h"
 #include "errors.h"
 
-struct stack *create(void *elt)
+struct stack *create_stack(void)
 {
-    if (elt == NULL)
-        return NULL;
-
     struct stack *stack = malloc(sizeof(struct stack));
-    struct node *node = malloc(sizeof(struct node));
 
-    if (stack == NULL || node == NULL)
+    if (stack == NULL)
         func_failure("Malloc fail");
 
-    node->data = elt;
-    stack->tail = node;
-    stack->tail->next = NULL;
-    stack->size = 1;
+    stack->capcity = CAPACITY;
+    stack->size = 0;
+    stack->array = malloc(sizeof(struct token) * CAPACITY);
+
+    return stack;
 }
 
-void push(struct stack *stack, void *elt)
+void push_stack(struct stack *stack, struct token *token)
 {
-    struct node *node = malloc(sizeof(struct node));
-    if (node == NULL)
-        func_failure("Malloc fail");
-
-    node->data = node;
-    node->next = NULL;
-    node->prev = stack->tail;
-    stack->tail->next = node;
-    stack->tail = node;
-    stack->size += 1;
+    if (stack->size < stack->capcity)
+    {
+        stack->array[stack->size] = token;
+        stack->size += 1;
+    }
 }
 
 // The returned node still need to be freed by the user
-struct node *pop(struct stack *stack)
+struct token *pop_stack(struct stack *stack)
 {
     if (stack->size == 0)
         return NULL;
 
-    struct node *tail = stack->tail;
-    stack->tail = stack->tail->prev;
+    struct token *token = stack->array[stack->size - 1];
     stack->size -= 1;
 
-    return tail;
+    return token;
+}
+
+void free_stack(struct stack *stack)
+{
+    free(stack->array);
+    free(stack);
 }

@@ -3,9 +3,10 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include "parse.h"
-#include "utils.h"
 #include "errors.h"
+#include "parse.h"
+#include "stack.h"
+#include "utils.h"
 
 #define SIZE 50
 
@@ -37,36 +38,28 @@ struct parser parse_table[] = {
     {"NOT", parse_not},
 };
 
-struct token operators[SIZE];
-struct token operands[SIZE];
-struct token postfix[SIZE];
-
-int topo = 0;
-int topan = 0;
-int toppost = 0;
-
 /* TO DELETE */
-void print_stacks(void)
+void print_stacks(struct stack *stack)
 {
-    struct token t;
+    struct token *t;
 
-    for (int i = 0; i < toppost; i++)
+    for (int i = 0; i < stack->size; i++)
     {
-        t = postfix[i];
-        if (t.type == AND)
+        t = stack->array[i];
+        if (t->type == AND)
             printf("AND ");
-        else if (t.type == OR)
+        else if (t->type == OR)
             printf("OR ");
-        else if (t.type == NOT)
+        else if (t->type == NOT)
             printf("! ");
-        else if (t.type == PAREN_O)
+        else if (t->type == PAREN_O)
             printf("( ");
-        else if (t.type == PAREN_C)
+        else if (t->type == PAREN_C)
             printf(") ");
-        else if (t.type == PRINT)
+        else if (t->type == PRINT)
             printf("print ");
         else
-            printf("%s ", t.value[0]);
+            printf("%s ", t->value[0]);
     }
 }
 
@@ -85,26 +78,6 @@ int getPrecedence(enum token_type type)
     return 0; // Should return error
 }
 
-void push_operand(struct token token)
-{
-    operands[topan++] = token;
-}
-
-struct token pop_operand(void)
-{
-    return operands[--topan];
-}
-
-void push_operator(struct token token)
-{
-    operators[topo++] = token;
-}
-
-struct token pop_operator(void)
-{
-    return operators[--topo];
-}
-
 int isOperator(const char *op)
 {
     if (
@@ -118,62 +91,96 @@ int isOperator(const char *op)
     return 0;
 }
 
-struct token *parse(char *argv[], int start, int end)
+struct token *create_token(enum token_type type, enum token_category category, char **value)
+{
+    struct token *token = malloc(sizeof(struct token));
+    token->type = type;
+    token->category = category;
+    if (value == NULL)
+    {
+        value = malloc(sizeof(char *) * 2);
+        if (value == NULL)
+            func_failure("Malloc fail");
+    }
+    token->value = value;
+
+    return token;
+}
+
+struct stack *parse(char *argv[], int start, int end)
 {
     int cursor = start;
     int len = sizeof(parse_table) / sizeof(parse_table[0]);
     bool pushand = false;
 
+    // postfix stack
+    struct stack *poststack = create_stack();
+    // operands stack
+    struct stack *andstack = create_stack();
+    // operators stack
+    struct stack *orstack = create_stack();
+
     while (cursor < end)
     {
-        for (int i = 0; i < len; i++)
+        int i = 0;
+        for (i = 0; i < len; i++)
         {
             if (strcmp(parse_table[i].value, argv[cursor]) == 0)
             {
                 if (strcmp(argv[cursor], "(") == 0)
                 {
-                    struct token token = { PAREN_O, OPERATOR, NULL };
-                    push_operator(token);
+                    struct token *token = create_token(PAREN_O, OPERATOR, NULL);
+                    push_stack(andstack, token);
                 }
                 else if (strcmp(argv[cursor], ")") == 0)
                 {
-                    while (operators[topo - 1].type != PAREN_O)
-                        postfix[toppost++] = pop_operator();
-                    pop_operator(); // pop last "("
+                    while (orstack->array[orstack->size - 1]->type != PAREN_O)
+                        push_stack(poststack, pop_stack(orstack));
+                    pop_stack(orstack);
                 }
                 else if (!isOperator(argv[cursor]))
                 {
                     if (pushand)
                     {
-                        struct token and = { AND, OPERATOR, NULL };
-                        push_operator(and);
+                        struct token *and = create_token(AND, OPERATOR, NULL);
+                        push_stack(orstack, and);
                     }
 
-                    struct token token = parse_table[i].func(argv, &cursor);
-                    postfix[toppost++] = token;
+                    struct token tok = parse_table[i].func(argv, &cursor);
+                    struct token *token = create_token(tok.type, tok.category, tok.value);
+                    push_stack(poststack, token);
                     pushand = true;
                 }
                 else
                 {
                     pushand = false;
-                    struct token token = parse_table[i].func(argv, &cursor);
+                    struct token tok = parse_table[i].func(argv, &cursor);
+                    struct token *token = create_token(tok.type, tok.category, tok.value);
                     while (
-                        topo - 1 >= 0 &&
-                        getPrecedence(operators[topo - 1].type)
-                        >= getPrecedence(token.type)
+                        orstack->size - 1 >= 0 &&
+                        getPrecedence(orstack->array[orstack->size - 1]->type)
+                        >= getPrecedence(token->type)
                     )
-                        postfix[toppost++] = pop_operator();
-                    push_operator(token);
+                        push_stack(poststack, pop_stack(orstack));
                 }
                 break;
             }
         }
+        if (i == len)
+        {
+            free_stack(orstack);
+            free_stack(andstack);
+            parse_error(UNKN_PRED, argv[cursor]);
+        }
         cursor++;
     }
-    while (topo > 0)
-        postfix[toppost++] = pop_operator();
+    while (orstack->size > 0)
+        push_stack(poststack, pop_stack(orstack));
 
-    return postfix;
+    free_stack(orstack);
+    free_stack(andstack);
+    poststack->array[poststack->size] = NULL;
+    return poststack;
 }
 
 // Operators functions
@@ -228,11 +235,11 @@ struct token parse_not(char *argv[], int *cursor)
 
 struct token parse_name(char *argv[], int* cursor)
 {
-    *cursor += 1;
-    if (argv[*cursor] == NULL)
-        parse_error(CMD_MALFORMED);
+    if (argv[*cursor + 1] == NULL)
+        parse_error(MISS_ARG, argv[*cursor]);
 
-    char **value = malloc(sizeof(argv[*cursor]));
+    *cursor += 1;
+    char **value = malloc(sizeof(char *) * 2);
     value[0] = argv[*cursor];
     struct token token = { NAME, TEST, value };
     return token;
@@ -240,11 +247,11 @@ struct token parse_name(char *argv[], int* cursor)
 
 struct token parse_type(char *argv[], int *cursor)
 {
-    *cursor += 1;
-    if (argv[*cursor] == NULL)
-        parse_error(CMD_MALFORMED);
+    if (argv[*cursor + 1] == NULL)
+        parse_error(MISS_ARG, argv[*cursor]);
 
-    char **value = malloc(sizeof(argv[*cursor]));
+    *cursor += 1;
+    char **value = malloc(sizeof(char *) * 2);
     value[0] = argv[*cursor];
     struct token token = { TYPE, TEST, value };
     return token;
@@ -252,11 +259,11 @@ struct token parse_type(char *argv[], int *cursor)
 
 struct token parse_newer(char *argv[], int *cursor)
 {
-    *cursor += 1;
-    if (argv[*cursor] == NULL)
-        parse_error(CMD_MALFORMED);
+    if (argv[*cursor + 1] == NULL)
+        parse_error(MISS_ARG, argv[*cursor]);
 
-    char **value = malloc(sizeof(argv[*cursor]));
+    *cursor += 1;
+    char **value = malloc(sizeof(char *) * 2);
     value[0] = argv[*cursor];
     struct token token = { NEWER, TEST, value };
     return token;
@@ -264,11 +271,11 @@ struct token parse_newer(char *argv[], int *cursor)
 
 struct token parse_perm(char *argv[], int *cursor)
 {
-    *cursor += 1;
-    if (argv[*cursor] == NULL)
-        parse_error(CMD_MALFORMED);
+    if (argv[*cursor + 1] == NULL)
+        parse_error(MISS_ARG, argv[*cursor]);
 
-    char **value = malloc(sizeof(argv[*cursor]));
+    *cursor += 1;
+    char **value = malloc(sizeof(char *) * 2);
     value[0] = argv[*cursor];
     struct token token = { PERM, TEST, value };
     return token;
@@ -276,11 +283,11 @@ struct token parse_perm(char *argv[], int *cursor)
 
 struct token parse_group(char *argv[], int *cursor)
 {
-    *cursor += 1;
-    if (argv[*cursor] == NULL)
-        parse_error(CMD_MALFORMED);
+    if (argv[*cursor + 1] == NULL)
+        parse_error(MISS_ARG, argv[*cursor]);
 
-    char **value = malloc(sizeof(argv[*cursor]));
+    *cursor += 1;
+    char **value = malloc(sizeof(char *) * 2);
     value[0] = argv[*cursor];
     struct token token = { GROUP, TEST, value };
     return token;
@@ -288,11 +295,11 @@ struct token parse_group(char *argv[], int *cursor)
 
 struct token parse_user(char *argv[], int *cursor)
 {
-    *cursor += 1;
-    if (argv[*cursor] == NULL)
-        parse_error(CMD_MALFORMED);
+    if (argv[*cursor + 1] == NULL)
+        parse_error(MISS_ARG, argv[*cursor]);
 
-    char **value = malloc(sizeof(argv[*cursor]));
+    *cursor += 1;
+    char **value = malloc(sizeof(char *) * 2);
     value[0] = argv[*cursor];
     struct token token = { USER, TEST, value };
     return token;
@@ -305,17 +312,8 @@ struct token parse_print(char *argv[], int* cursor)
     UNUSED(argv);
     UNUSED(cursor);
 
-    char **value = malloc(sizeof(2));
-    value[0] = "ignore";
-
-    for (int i = 0; i < toppost; i++)
-    {
-        if (postfix[i].type == PRINT)
-        {
-            value[0] = NULL;
-            break;
-        }
-    }
+    char **value = malloc(sizeof(char *) * 2);
+    value[0] = NULL;
 
     struct token token = { PRINT, ACTION, value };
     return token;
@@ -332,7 +330,7 @@ struct token parse_delete(char *argv[], int *cursor)
 
 struct token parse_exec(char *argv[], int *cursor)
 {
-    char **value = malloc(VALUE_SIZE * sizeof(char));
+    char **value = malloc(VALUE_SIZE * sizeof(char *));
     if (value == NULL)
        func_failure("malloc fail");
 
@@ -368,7 +366,7 @@ struct token parse_exec(char *argv[], int *cursor)
 
 struct token parse_execdir(char *argv[], int *cursor)
 {
-    char **value = malloc(VALUE_SIZE * sizeof(char));
+    char **value = malloc(VALUE_SIZE * sizeof(char *));
     if (value == NULL)
        func_failure("malloc fail");
 

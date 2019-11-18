@@ -3,7 +3,8 @@
 
 #define VALUE_SIZE 100
 
-struct parser {
+struct parser
+{
     char *value;
     struct token (*func)(char *argv[], int* cursor);
 };
@@ -39,13 +40,21 @@ enum token_type
     PRINT
 };
 
-struct token {
+struct token
+{
     enum token_type type;
     enum token_category category;
     char **value;
 };
 
-struct token *parse(char *argv[], int start, int end);
+// operators/operands stack management functions
+struct token *create_token(
+    enum token_type type,
+    enum token_category category,
+    char **value
+);
+
+struct stack *parse(char *argv[], int start, int end);
 int isOperand(const char *op);
 
 // token parsing functions
@@ -64,11 +73,5 @@ struct token parse_user(char *argv[], int *cursor);
 struct token parse_delete(char *argv[], int *cursor);
 struct token parse_exec(char *argv[], int *cursor);
 struct token parse_execdir(char *argv[], int *cursor);
-
-// operators/operands stack management functions
-void push_operator(struct token token);
-struct token pop_operator();
-void push_operand(struct token token);
-struct token pop_operand();
 
 #endif

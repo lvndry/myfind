@@ -1,9 +1,8 @@
 #ifndef AST_H
 #define AST_H
 
-#define FUN_LENGTH 5
-
 #include "parse.h"
+#include "stack.h"
 
 struct params
 {
@@ -16,10 +15,16 @@ struct params
 
 struct ast
 {
-    struct token token;
-    struct params *params;
+    struct token *token;
     struct ast *left;
     struct ast *right;
+};
+
+struct stack_ast
+{
+    struct ast **array;
+    int capcity;
+    int size;
 };
 
 /*
@@ -34,11 +39,8 @@ struct expression
     int (*function)(struct params *params);
 };
 
-struct ast *create_node(struct token token);
-void push_node(struct ast *node);
-struct ast *pop_node();
-void remove_node(struct ast *ast);
-struct ast *constructTree(struct token postfix[]);
+struct ast *create_node(struct token *token);
+struct ast *constructTree(struct stack *postfix);
 int evaluate(struct ast* ast, struct params *params);
 void free_ast(struct ast *root);
 
@@ -54,7 +56,5 @@ int has_perm(struct params *params);
 int execute(struct params *params);
 int executedir(struct params *params);
 int executeplus(struct params *params);
-
-extern int shouldprint;
 
 #endif

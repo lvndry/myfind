@@ -13,13 +13,26 @@
 #include <unistd.h>
 
 #include "ast.h"
-#include "utils.h"
 #include "errors.h"
+#include "utils.h"
+#include "stack.h"
 
 #define TREE_SIZE 50
 
 struct ast *tree[TREE_SIZE] = { NULL };
 int treetop = 0;
+
+// to delete
+void inorder(struct ast *node)
+{
+    if (node)
+    {
+        inorder(node->left);
+        printf("%d ", node->token->type);
+        inorder(node->right);
+    }
+    printf("\n");
+}
 
 struct expression expressions[] = {
     // tests
@@ -70,17 +83,48 @@ struct expression expressions[] = {
     }
 };
 
-void push_node(struct ast *node)
+struct stack_ast *create_astack(void)
 {
-    tree[treetop++] = node;
+    struct stack_ast *stack = malloc(sizeof(struct stack_ast));
+
+    if (stack == NULL)
+        func_failure("Malloc fail");
+
+    stack->capcity = CAPACITY;
+    stack->size = 0;
+    stack->array = malloc(sizeof(struct ast) * CAPACITY);
+
+    return stack;
 }
 
-struct ast *pop_node(void)
+void push_astack(struct stack_ast *stack, struct ast *node)
 {
-    return tree[--treetop];
+    if (stack->size < stack->capcity)
+    {
+        stack->array[stack->size] = node;
+        stack->size += 1;
+    }
 }
 
-struct ast *create_node(struct token token)
+// The returned node still need to be freed by the user
+struct ast *pop_astack(struct stack_ast *stack)
+{
+    if (stack->size == 0)
+        return NULL;
+
+    struct ast *node = stack->array[stack->size - 1];
+    stack->size -= 1;
+
+    return node;
+}
+
+void free_astack(struct stack_ast *stack)
+{
+    free(stack->array);
+    free(stack);
+}
+
+struct ast *create_node(struct token *token)
 {
     struct ast *ast = malloc(sizeof(struct ast));
 
@@ -96,9 +140,10 @@ void free_ast(struct ast *root)
     if (root == NULL)
         return;
 
-    free(root->token.value);
     free_ast(root->left);
     free_ast(root->right);
+    free(root->token->value);
+    free(root->token);
     free(root);
 }
 
@@ -114,48 +159,37 @@ int isParent(enum token_type type)
     return 0;
 }
 
-// to delete
-void inorder(struct ast *node)
-{
-    if (node)
-    {
-        inorder(node->left);
-        printf("%d ", node->token.type);
-        inorder(node->right);
-    }
-    printf("\n");
-}
-
-struct ast *constructTree(struct token postfix[])
+struct ast *constructTree(struct stack *postfix)
 {
     struct ast *parent;
     struct ast *right;
     struct ast *left;
     int i = 0;
-    int len = 0;
+    struct stack_ast *stack = create_astack();
 
-    while (postfix[len].type)
-        len++;
-
-    if (len == 0)
+    if (postfix->size == 0)
         return NULL;
 
-    while (postfix[i].type)
+    while (postfix->array[i])
     {
-        if (!isParent(postfix[i].type))
-            parent = create_node(postfix[i]);
+        if (!isParent(postfix->array[i]->type))
+            parent = create_node(postfix->array[i]);
         else
         {
-            parent = create_node(postfix[i]);
-            right = pop_node();
-            left = pop_node();
+            parent = create_node(postfix->array[i]);
+            right = pop_astack(stack);
+            left = pop_astack(stack);
             parent->left = left;
             parent->right = right;
         }
-        push_node(parent);
+        push_astack(stack, parent);
         i++;
     }
-    parent = pop_node();
+
+    parent = pop_astack(stack);
+
+    free_stack(postfix);
+    free_astack(stack);
     // inorder(parent);
     return parent;
 }
@@ -171,7 +205,7 @@ int evaluate(struct ast *ast, struct params *params)
     int len = sizeof(expressions) / sizeof(expressions[0]);
     int i = 0;
 
-    switch (ast->token.type)
+    switch (ast->token->type)
     {
         case OR:
             if (evaluate(ast->left, params))
@@ -189,20 +223,20 @@ int evaluate(struct ast *ast, struct params *params)
         default:
             for (i = 0; i < len; i++)
             {
-                if (ast->token.type == expressions[i].type)
+                if (ast->token->type == expressions[i].type)
                 {
-                    if (ast->token.category == ACTION)
+                    if (ast->token->category == ACTION)
                         params->shouldprint = 0;
                     else
                         params->shouldprint = 1;
-                    params->argv = ast->token.value;
+                    params->argv = ast->token->value;
                     return expressions[i].function(params);
                 }
             }
             func_failure("./myfind: Invalid expression type");
         break;
     }
-    return 1;
+    return 0;
 }
 
 // Test functions
@@ -533,7 +567,7 @@ int executeplus(struct params *params)
             (sizeof(char *) * sizelen) + (sizeof(char *) * strlen(params->pathname) + 1)
         );
         params->execvalue[fileslen] = malloc(sizeof(char) * strlen(params->pathname) + 1);
-        strctpy(params->execvalue[fileslen++], params->pathname);
+        strcpy(params->execvalue[fileslen++], params->pathname);
         sizelen += strlen(params->pathname) + 1;
     }
 

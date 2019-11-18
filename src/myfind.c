@@ -12,10 +12,11 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "parse.h"
 #include "ast.h"
-#include "utils.h"
 #include "errors.h"
+#include "parse.h"
+#include "stack.h"
+#include "utils.h"
 
 struct opts_t
 {
@@ -32,9 +33,7 @@ void getStat(char *filename, struct stat *statbuff, struct opts_t options);
 void setparams(
     struct params *params,
     char *pathname,
-    char *filename,
-    char **argv,
-    char **execvalue
+    char *filename
 );
 void print_evaluate(struct ast *ast, char *pathname, char *filename);
 int ls(char *path, struct ast *ast, struct opts_t options);
@@ -111,23 +110,26 @@ void getStat(char *filename, struct stat *statbuff, struct opts_t options)
 void setparams(
     struct params *params,
     char *pathname,
-    char *filename,
-    char **argv,
-    char **execvalue
+    char *filename
 )
 {
     params->pathname = pathname;
     params->filename = filename;
-    params->argv = argv;
-    params->execvalue = execvalue;
     params->shouldprint = 0;
 }
 
 void print_evaluate(struct ast *ast, char *pathname, char *filename)
 {
-    struct params params = { pathname, filename, NULL, NULL, 0 };
-    int res = evaluate(ast, &params);
+    if (ast == NULL)
+    {
+         printf("%s\n", pathname);
+         return;
+    }
 
+    // params->argv is set in evaluate function
+    struct params params = { pathname, filename, NULL, NULL, 0 };
+    setparams(&params, pathname, filename);
+    int res = evaluate(ast, &params);
     if (res == 1 && params.shouldprint == 1)
         printf("%s\n", pathname);
 }
@@ -135,17 +137,18 @@ void print_evaluate(struct ast *ast, char *pathname, char *filename)
 int ls(char *path, struct ast *ast, struct opts_t options)
 {
     DIR *dir = opendir(path);
-
     if (dir == NULL)
     {
         if(access(path, R_OK) == -1)
         {
+            if (!options.d)
+                print_evaluate(ast, path, path);
             print_error(path, strerror(errno));
             if (options.d)
                 print_evaluate(ast, path, path);
             return 1;
         }
-        if (options.d)
+        else
             print_evaluate(ast, path, path);
         return 0;
     }
@@ -177,7 +180,7 @@ int ls(char *path, struct ast *ast, struct opts_t options)
             {
                 if (
                     !options.d
-                    && strstr(path, filename) == NULL
+                    && strstr(filename, dname) == NULL
                 )
                     print_evaluate(ast, filename, dname);
                 ls(filename, ast, options);
@@ -200,7 +203,9 @@ void myfind(char *path, struct ast *ast, struct opts_t options)
     if (islink(path) && options.p)
         printf("%s\n", path);
     else
+    {
         ls(path, ast, options);
+    }
 }
 
 int main(int argc, char **argv)
@@ -209,8 +214,10 @@ int main(int argc, char **argv)
     struct opts_t options = { .d = 0, .h = 0, .l = 0, .p = 1 };
     int optend = setOptions(&options, argv, 1, argc);
     int pathend = getPaths(argv, optend + 1, argc);
-    struct token *tokens = parse(argv, pathend + 1, argc);
-    struct ast *ast = constructTree(tokens);
+    struct stack *tokens = parse(argv, pathend + 1, argc);
+    struct ast *ast = NULL;
+    if (argc > pathend + 1)
+        ast = constructTree(tokens);
 
     if (pathend - optend > 0)
     {
