@@ -5,20 +5,21 @@
 
 #include "parse.h"
 
-struct ast
-{
-    struct token token;
-    struct ast *left;
-    struct ast *right;
-};
-
 struct params
 {
   char *pathname;
   char *filename;
-  char **value;
+  char **argv;
   char **execvalue;
   int shouldprint;
+};
+
+struct ast
+{
+    struct token token;
+    struct params *params;
+    struct ast *left;
+    struct ast *right;
 };
 
 /*

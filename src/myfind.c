@@ -15,6 +15,7 @@
 #include "parse.h"
 #include "ast.h"
 #include "utils.h"
+#include "errors.h"
 
 struct opts_t
 {
@@ -23,6 +24,21 @@ struct opts_t
     int h;
     int p;
 };
+
+int setOptions(struct opts_t *options, char *argv[], int start, int end);
+int getPaths(char *argv[], int start, int argc);
+void getFilename(char *filename, char*path, char *d_name);
+void getStat(char *filename, struct stat *statbuff, struct opts_t options);
+void setparams(
+    struct params *params,
+    char *pathname,
+    char *filename,
+    char **argv,
+    char **execvalue
+);
+void print_evaluate(struct ast *ast, char *pathname, char *filename);
+int ls(char *path, struct ast *ast, struct opts_t options);
+void myfind(char *path, struct ast *ast, struct opts_t options);
 
 int setOptions(struct opts_t *options, char *argv[], int start, int end)
 {
@@ -96,13 +112,13 @@ void setparams(
     struct params *params,
     char *pathname,
     char *filename,
-    char **value,
+    char **argv,
     char **execvalue
 )
 {
     params->pathname = pathname;
     params->filename = filename;
-    params->value = value;
+    params->argv = argv;
     params->execvalue = execvalue;
     params->shouldprint = 0;
 }
@@ -124,7 +140,7 @@ int ls(char *path, struct ast *ast, struct opts_t options)
     {
         if(access(path, R_OK) == -1)
         {
-            fprintf(stderr, "myfind: %s: %s\n", path, strerror(errno));
+            print_error(path, strerror(errno));
             if (options.d)
                 print_evaluate(ast, path, path);
             return 1;

@@ -26,3 +26,8 @@ void parse_error(enum error_type type)
         break;
     }
 }
+
+void print_error(char *path, char *errno)
+{
+    fprintf(stderr, "./myfind: %s: %s\n", path, strerror(errno));
+}

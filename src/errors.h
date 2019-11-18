@@ -9,5 +9,6 @@ enum error_type
 
 void func_failure(char *message);
 void parse_error(enum error_type type);
+void print_error(char *path, char *errno);
 
 #endif

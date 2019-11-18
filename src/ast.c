@@ -195,7 +195,7 @@ int evaluate(struct ast *ast, struct params *params)
                         params->shouldprint = 0;
                     else
                         params->shouldprint = 1;
-                    params->value = ast->token.value;
+                    params->argv = ast->token.value;
                     return expressions[i].function(params);
                 }
             }
@@ -217,7 +217,7 @@ int is_newer(struct params *params)
 {
     struct stat statbuff;
 
-    stat(params->value[0], &statbuff);
+    stat(params->argv[0], &statbuff);
     struct timespec timearg = statbuff.st_mtim;
     stat(params->pathname, &statbuff);
     struct timespec timepath = statbuff.st_mtim;
@@ -228,7 +228,7 @@ int is_newer(struct params *params)
 
 int group_own(struct params *params)
 {
-    struct group *group = getgrnam(params->value[0]);
+    struct group *group = getgrnam(params->argv[0]);
     if (group == NULL)
         return 0;
     struct stat statbuff;
@@ -239,7 +239,7 @@ int group_own(struct params *params)
 
 int user_own(struct params *params)
 {
-    struct passwd *user = getpwnam(params->value[0]);
+    struct passwd *user = getpwnam(params->argv[0]);
     if (user == NULL)
         return 0;
     struct stat statbuff;
@@ -251,8 +251,8 @@ int has_name(struct params *params)
 {
     int offset = remove_ds(params->filename);
 
-    // printf("fnmatch: %d - params->filename: %s\n", fnmatch(params->value[0], params->filename + offset, FNM_PATHNAME), params->filename + offset);
-    if (fnmatch(params->value[0], params->filename + offset, FNM_PATHNAME) == 0)
+    // printf("fnmatch: %d - params->filename: %s\n", fnmatch(params->argv[0], params->filename + offset, FNM_PATHNAME), params->filename + offset);
+    if (fnmatch(params->argv[0], params->filename + offset, FNM_PATHNAME) == 0)
         return 1;
     return 0;
 }
@@ -262,7 +262,7 @@ int has_type(struct params *params)
     struct stat statbuff;
     lstat(params->pathname, &statbuff);
 
-    switch (params->value[0][0])
+    switch (params->argv[0][0])
     {
         case 'b':
             return S_ISBLK(statbuff.st_mode);
@@ -292,17 +292,17 @@ int has_perm(struct params *params)
 
     __mode_t statchmod = buf.st_mode & MODE_ALL;
 
-    if (params->value[0][0] == '-')
+    if (params->argv[0][0] == '-')
     {
-        char *cpy = *(params->value) + 1;
+        char *cpy = *(params->argv) + 1;
         __mode_t argmode = atoi(cpy);
         int octmod = toOctal(statchmod);
         return (octmod & argmode) == argmode;
     }
-    else if (params->value[0][0] == '/')
+    else if (params->argv[0][0] == '/')
     {
         // Check every bytes and see if a user can do it
-        char *cpy = *(params->value) + 1;
+        char *cpy = *(params->argv) + 1;
         __mode_t argmode = atoi(cpy);
         __mode_t bit1 = cpy[0] - '0';
         __mode_t bit2 = cpy[1] - '0';
@@ -328,9 +328,9 @@ int has_perm(struct params *params)
             return 1;
         return (statchmod & argmode) != 0;
     }
-    else if (isNumeric(params->value[0]))
+    else if (isNumeric(params->argv[0]))
     {
-        int argmod = atoi(params->value[0]);
+        int argmod = atoi(params->argv[0]);
         int octmod = toOctal(statchmod);
         return octmod == argmod;
     }
@@ -355,14 +355,14 @@ int execute(struct params *params)
     int i = 0;
     char *template = NULL;
 
-    for (i = 0; params->value[i] != NULL; ++i)
+    for (i = 0; params->argv[i] != NULL; ++i)
     {
-        // TODO: Handle several {} in same params->value
-        if ((ptr = strstr(params->value[i], "{}")) != NULL)
+        // TODO: Handle several {} in same params->argv
+        if ((ptr = strstr(params->argv[i], "{}")) != NULL)
         {
             template = malloc(
                 sizeof(char) *
-                (sizeof(params->value[i]) + sizeof(params->pathname)) + 1000
+                (sizeof(params->argv[i]) + sizeof(params->pathname)) + 1000
             );
             template[0] = 0;
             if (template == NULL)
@@ -372,14 +372,14 @@ int execute(struct params *params)
             }
             args[i] = create_template(
                 template,
-                params->value[i],
+                params->argv[i],
                 ptr,
                 params->pathname,
                 0
             );
         }
         else
-            args[i] = params->value[i];
+            args[i] = params->argv[i];
     }
 
     args[i] = NULL;
@@ -420,14 +420,14 @@ int executedir(struct params *params)
     int i = 0;
     char *template = NULL;
 
-    for (i = 0; params->value[i] != NULL; ++i)
+    for (i = 0; params->argv[i] != NULL; ++i)
     {
-        // TODO: Handle several {} in same params->value
-        if ((ptr = strstr(params->value[i], "{}")) != NULL)
+        // TODO: Handle several {} in same params->argv
+        if ((ptr = strstr(params->argv[i], "{}")) != NULL)
         {
             template = malloc(
                 sizeof(char) *
-                ((sizeof(params->value[i]) + sizeof(params->filename)) + 1000)
+                ((sizeof(params->argv[i]) + sizeof(params->filename)) + 1000)
             );
             template[0] = 0;
 
@@ -436,14 +436,14 @@ int executedir(struct params *params)
 
             args[i] = create_template(
                 template,
-                params->value[i],
+                params->argv[i],
                 ptr,
                 params->filename,
                 1
             );
         }
         else
-            args[i] = params->value[i];
+            args[i] = params->argv[i];
     }
 
     args[i] = NULL;
@@ -490,9 +490,9 @@ int executeplus(struct params *params)
         * (100 + sizeof(params->execvalue) + fileslen));
         int i = 0;
 
-        while (strcmp(params->value[i], "{}") != 0)
+        while (strcmp(params->argv[i], "{}") != 0)
         {
-            args[i] = params->value[i];
+            args[i] = params->argv[i];
             i++;
         }
 
@@ -533,7 +533,7 @@ int executeplus(struct params *params)
             (sizeof(char *) * sizelen) + (sizeof(char *) * strlen(params->pathname) + 1)
         );
         params->execvalue[fileslen] = malloc(sizeof(char) * strlen(params->pathname) + 1);
-        params->execvalue[fileslen++] = params->pathname;
+        strctpy(params->execvalue[fileslen++], params->pathname);
         sizelen += strlen(params->pathname) + 1;
     }
 
