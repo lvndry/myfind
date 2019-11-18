@@ -20,13 +20,12 @@
 // to delete
 void inorder(struct ast *node)
 {
-    if (node)
+    if (node != NULL)
     {
         inorder(node->left);
         printf("%d ", node->token->type);
         inorder(node->right);
     }
-    printf("\n");
 }
 
 struct expression expressions[] = {
@@ -156,14 +155,14 @@ int isParent(enum token_type type)
 
 struct ast *constructTree(struct stack *postfix)
 {
+    if (postfix == NULL)
+        return NULL;
+
     struct ast *parent;
     struct ast *right;
     struct ast *left;
+    struct stack_ast *astack = create_astack();
     int i = 0;
-    struct stack_ast *stack = create_astack();
-
-    if (postfix->size == 0)
-        return NULL;
 
     while (postfix->array[i])
     {
@@ -172,20 +171,21 @@ struct ast *constructTree(struct stack *postfix)
         else
         {
             parent = create_node(postfix->array[i]);
-            right = pop_astack(stack);
-            left = pop_astack(stack);
+            right = pop_astack(astack);
+            left = pop_astack(astack);
             parent->left = left;
             parent->right = right;
         }
-        push_astack(stack, parent);
+        push_astack(astack, parent);
         i++;
     }
 
-    parent = pop_astack(stack);
+    astack->array[astack->size] = NULL;
+    parent = pop_astack(astack);
 
     free_stack(postfix);
-    free_astack(stack);
-    // inorder(parent);
+    free_astack(astack);
+
     return parent;
 }
 
@@ -203,10 +203,8 @@ int evaluate(struct ast *ast, struct params *params)
     switch (ast->token->type)
     {
         case OR:
-            if (evaluate(ast->left, params))
-                return 1;
-             return evaluate(ast->right, params);
-             break;
+            return evaluate(ast->left, params) || evaluate(ast->right, params);
+            break;
         case AND:
             if (evaluate(ast->left, params))
                 return evaluate(ast->right, params);

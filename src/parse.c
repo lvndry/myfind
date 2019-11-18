@@ -91,17 +91,22 @@ int isOperator(const char *op)
     return 0;
 }
 
-struct token *create_token(enum token_type type, enum token_category category, char **value)
+struct token *create_token(
+    enum token_type type,
+    enum token_category category,
+    char **value
+)
 {
     struct token *token = malloc(sizeof(struct token));
     token->type = type;
     token->category = category;
     if (value == NULL)
     {
-        value = malloc(sizeof(char *) * 2);
+        value = malloc(sizeof(char *) * 20);
         if (value == NULL)
             func_failure("Malloc fail");
     }
+
     token->value = value;
 
     return token;
@@ -115,8 +120,6 @@ struct stack *parse(char *argv[], int start, int end)
 
     // postfix stack
     struct stack *poststack = create_stack();
-    // operands stack
-    struct stack *andstack = create_stack();
     // operators stack
     struct stack *orstack = create_stack();
 
@@ -130,11 +133,14 @@ struct stack *parse(char *argv[], int start, int end)
                 if (strcmp(argv[cursor], "(") == 0)
                 {
                     struct token *token = create_token(PAREN_O, OPERATOR, NULL);
-                    push_stack(andstack, token);
+                    push_stack(orstack, token);
                 }
                 else if (strcmp(argv[cursor], ")") == 0)
                 {
-                    while (orstack->array[orstack->size - 1]->type != PAREN_O)
+                    while (
+                        orstack->size > 0
+                        && orstack->array[orstack->size - 1]->type != PAREN_O
+                    )
                         push_stack(poststack, pop_stack(orstack));
                     pop_stack(orstack);
                 }
@@ -147,7 +153,11 @@ struct stack *parse(char *argv[], int start, int end)
                     }
 
                     struct token tok = parse_table[i].func(argv, &cursor);
-                    struct token *token = create_token(tok.type, tok.category, tok.value);
+                    struct token *token = create_token(
+                        tok.type,
+                        tok.category,
+                        tok.value
+                    );
                     push_stack(poststack, token);
                     pushand = true;
                 }
@@ -155,21 +165,26 @@ struct stack *parse(char *argv[], int start, int end)
                 {
                     pushand = false;
                     struct token tok = parse_table[i].func(argv, &cursor);
-                    struct token *token = create_token(tok.type, tok.category, tok.value);
+                    struct token *token = create_token(
+                        tok.type,
+                        tok.category,
+                        tok.value
+                    );
                     while (
                         orstack->size - 1 >= 0 &&
                         getPrecedence(orstack->array[orstack->size - 1]->type)
                         >= getPrecedence(token->type)
                     )
                         push_stack(poststack, pop_stack(orstack));
+                    push_stack(orstack, token);
                 }
                 break;
             }
         }
-        if (i == len)
+        if (i == len - 1)
         {
             free_stack(orstack);
-            free_stack(andstack);
+            free_stack(poststack);
             parse_error(UNKN_PRED, argv[cursor]);
         }
         cursor++;
@@ -178,7 +193,6 @@ struct stack *parse(char *argv[], int start, int end)
         push_stack(poststack, pop_stack(orstack));
 
     free_stack(orstack);
-    free_stack(andstack);
     poststack->array[poststack->size] = NULL;
     return poststack;
 }

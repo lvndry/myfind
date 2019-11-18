@@ -216,6 +216,7 @@ int main(int argc, char **argv)
     int pathend = getPaths(argv, optend + 1, argc);
     struct stack *tokens = parse(argv, pathend + 1, argc);
     struct ast *ast = NULL;
+
     if (argc > pathend + 1)
         ast = constructTree(tokens);
 
@@ -234,5 +235,6 @@ int main(int argc, char **argv)
     }
 
     free_ast(ast);
+
     return 0;
 }
