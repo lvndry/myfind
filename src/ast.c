@@ -17,11 +17,6 @@
 #include "utils.h"
 #include "stack.h"
 
-#define TREE_SIZE 50
-
-struct ast *tree[TREE_SIZE] = { NULL };
-int treetop = 0;
-
 // to delete
 void inorder(struct ast *node)
 {
