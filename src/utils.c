@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include <stdio.h>
+#include "errors.h"
 
 // File manipulation
 int islink(const char *path)
@@ -14,8 +15,11 @@ int islink(const char *path)
     return S_ISLNK(buff.st_mode);
 }
 
-int remove_ds(const char *path)
+int remove_ds(char *path)
 {
+    while (path[strlen(path) - 1] == '/')
+        path[strlen(path) - 1] = '\0';
+
     if (strstr(path, "./") == path)
         return 2;
     return 0;
@@ -98,3 +102,31 @@ void format_path(char *path)
     if (path[strlen(path) - 1] == '/')
         path[strlen(path) - 1] = '\0';
 }
+
+/*
+char *build_exarg(char *dest, char *src, char *filename)
+{
+    char *template = NULL;
+
+    while ((src = strstr(src, "{}")) != NULL)
+    {
+        template = realloc(
+            template,
+            sizeof(char) *
+            ((sizeof(src) + sizeof(filename)) + 1000)
+        );
+        if (template == NULL)
+            func_failure("Malloc fail");
+        template[0] = 0;
+
+        dest = create_template(
+            template,
+            src,
+            &src,
+            filename,
+            0
+        );
+            continue;
+    }
+}
+*/

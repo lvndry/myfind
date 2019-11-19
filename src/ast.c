@@ -259,11 +259,15 @@ static int user_own(struct params *params)
 
 static int has_name(struct params *params)
 {
-    int offset = remove_ds(params->filename);
+    char *filename = malloc(strlen(params->filename) + 1);
+    strcpy(filename, params->filename);
+    int offset = remove_ds(filename);
+    int res = 0;
 
-    if (fnmatch(params->argv[0], params->filename + offset, FNM_PATHNAME) == 0)
-        return 1;
-    return 0;
+    if (fnmatch(params->argv[0], filename + offset, FNM_PATHNAME) == 0)
+        res = 1;
+    free(filename);
+    return res;
 }
 
 static int has_type(struct params *params)

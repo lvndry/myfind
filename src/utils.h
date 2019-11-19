@@ -8,7 +8,7 @@
 # define MODE_ALL	(S_ISUID | S_ISGID | S_ISVTX | MODE_RWX)
 
 int islink(const char *path);
-int remove_ds(const char *path);
+int remove_ds(char *path);
 int isNumeric(const char *str);
 int toOctal(int decimal);
 char *create_template(
