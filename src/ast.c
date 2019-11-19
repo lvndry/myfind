@@ -17,6 +17,19 @@
 #include "utils.h"
 #include "stack.h"
 
+// evaluation functions
+static int is_newer(struct params *params);
+static int print(struct params *params);
+static int group_own(struct params *params);
+static int user_own(struct params *params);
+static int rm(struct params *params);
+static int has_name(struct params *params);
+static int has_type(struct params *params);
+static int has_perm(struct params *params);
+static int execute(struct params *params);
+static int executedir(struct params *params);
+static int executeplus(struct params *params);
+
 // to delete
 void inorder(struct ast *node)
 {
@@ -76,47 +89,6 @@ struct expression expressions[] = {
         .function = executeplus,
     }
 };
-
-struct stack_ast *create_astack(void)
-{
-    struct stack_ast *stack = malloc(sizeof(struct stack_ast));
-
-    if (stack == NULL)
-        func_failure("Malloc fail");
-
-    stack->capcity = CAPACITY;
-    stack->size = 0;
-    stack->array = malloc(sizeof(struct ast) * CAPACITY);
-
-    return stack;
-}
-
-void push_astack(struct stack_ast *stack, struct ast *node)
-{
-    if (stack->size < stack->capcity)
-    {
-        stack->array[stack->size] = node;
-        stack->size += 1;
-    }
-}
-
-// The returned node still need to be freed by the user
-struct ast *pop_astack(struct stack_ast *stack)
-{
-    if (stack->size == 0)
-        return NULL;
-
-    struct ast *node = stack->array[stack->size - 1];
-    stack->size -= 1;
-
-    return node;
-}
-
-void free_astack(struct stack_ast *stack)
-{
-    free(stack->array);
-    free(stack);
-}
 
 struct ast *create_node(struct token *token)
 {
@@ -232,13 +204,13 @@ int evaluate(struct ast *ast, struct params *params)
 
 // Test functions
 
-int print(struct params *params)
+static int print(struct params *params)
 {
     printf("%s\n", params->pathname);
     return 1;
 }
 
-int is_newer(struct params *params)
+static int is_newer(struct params *params)
 {
     struct stat statbuff;
 
@@ -252,7 +224,7 @@ int is_newer(struct params *params)
     return timepath.tv_sec > timearg.tv_sec;
 }
 
-int group_own(struct params *params)
+static int group_own(struct params *params)
 {
     struct group *group = getgrnam(params->argv[0]);
     if (group == NULL)
@@ -270,7 +242,7 @@ int group_own(struct params *params)
     return group->gr_gid == statbuff.st_gid;
 }
 
-int user_own(struct params *params)
+static int user_own(struct params *params)
 {
     struct passwd *user = getpwnam(params->argv[0]);
     if (user == NULL)
@@ -288,7 +260,7 @@ int user_own(struct params *params)
     return user->pw_uid == statbuff.st_uid;
 }
 
-int has_name(struct params *params)
+static int has_name(struct params *params)
 {
     int offset = remove_ds(params->filename);
 
@@ -297,7 +269,7 @@ int has_name(struct params *params)
     return 0;
 }
 
-int has_type(struct params *params)
+static int has_type(struct params *params)
 {
     struct stat statbuff;
     lstat(params->pathname, &statbuff);
@@ -325,7 +297,7 @@ int has_type(struct params *params)
     return 1;
 }
 
-int has_perm(struct params *params)
+static int has_perm(struct params *params)
 {
     struct stat buf;
     stat(params->filename, &buf);
@@ -381,14 +353,14 @@ int has_perm(struct params *params)
 
 // Actions functions
 
-int rm(struct params *params)
+static int rm(struct params *params)
 {
     if (remove(params->pathname) == 0)
         return 1;
     return 0;
 }
 
-int execute(struct params *params)
+static int execute(struct params *params)
 {
     char *ptr;
     char **args = malloc(sizeof(char) * 100);
@@ -453,7 +425,7 @@ int execute(struct params *params)
     return 0;
 }
 
-int executedir(struct params *params)
+static int executedir(struct params *params)
 {
     char *ptr;
     char **args = malloc(sizeof(char) * 100);
@@ -518,7 +490,7 @@ int executedir(struct params *params)
 
 // Here I suppose that the exec + is correctly parsed and that
 // I only have to replace the last {} by the list of files
-int executeplus(struct params *params)
+static int executeplus(struct params *params)
 {
     static size_t sizelen = 0;
     static int fileslen = 0;

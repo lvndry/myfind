@@ -135,25 +135,30 @@ int print_evaluate(struct ast *ast, char *pathname, char *filename)
     return res;
 }
 
+int print_file(char *path, struct ast *ast, struct opts_t options)
+{
+    if (access(path, F_OK) == -1)
+        print_error(path, strerror(errno));
+    else if(access(path, R_OK) == -1)
+    {
+        if (!options.d)
+            print_evaluate(ast, path, path);
+        print_error(path, strerror(errno));
+        if (options.d)
+            print_evaluate(ast, path, path);
+        return 1;
+    }
+    else
+        print_evaluate(ast, path, path);
+    return 0;
+}
+
 int ls(char *path, struct ast *ast, struct opts_t options)
 {
     int evaluated = 0;
     DIR *dir = opendir(path);
     if (dir == NULL)
-    {
-        if(access(path, R_OK) == -1)
-        {
-            if (!options.d)
-                print_evaluate(ast, path, path);
-            print_error(path, strerror(errno));
-            if (options.d)
-                print_evaluate(ast, path, path);
-            return 1;
-        }
-        else
-            print_evaluate(ast, path, path);
-        return 0;
-    }
+        return print_file(path, ast, options);
 
     struct dirent *file;
     char filename[PATH_MAX];

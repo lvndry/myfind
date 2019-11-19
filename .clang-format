@@ -2,7 +2,6 @@
 BasedOnStyle: LLVM
 AllowAllArgumentsOnNextLine: true
 AllowAllParametersOfDeclarationOnNextLine: true
-BraceWrapping: true
 BreakBeforeBraces: Allman
 IndentWidth: 4
 IncludeBlocks: IBS_Regroup

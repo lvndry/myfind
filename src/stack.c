@@ -54,3 +54,44 @@ void print_stack(struct stack *stack)
     for (int i = 0; i < stack->size; i++)
         printf("%d ", stack->array[i]->type);
 }
+
+struct stack_ast *create_astack(void)
+{
+    struct stack_ast *stack = malloc(sizeof(struct stack_ast));
+
+    if (stack == NULL)
+        func_failure("Malloc fail");
+
+    stack->capcity = CAPACITY;
+    stack->size = 0;
+    stack->array = malloc(sizeof(struct ast) * CAPACITY);
+
+    return stack;
+}
+
+void push_astack(struct stack_ast *stack, struct ast *node)
+{
+    if (stack->size < stack->capcity)
+    {
+        stack->array[stack->size] = node;
+        stack->size += 1;
+    }
+}
+
+// The returned node still need to be freed by the user
+struct ast *pop_astack(struct stack_ast *stack)
+{
+    if (stack->size == 0)
+        return NULL;
+
+    struct ast *node = stack->array[stack->size - 1];
+    stack->size -= 1;
+
+    return node;
+}
+
+void free_astack(struct stack_ast *stack)
+{
+    free(stack->array);
+    free(stack);
+}
