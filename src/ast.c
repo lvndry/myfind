@@ -203,7 +203,9 @@ int evaluate(struct ast *ast, struct params *params)
     switch (ast->token->type)
     {
         case OR:
-            return evaluate(ast->left, params) || evaluate(ast->right, params);
+            if (evaluate(ast->left, params))
+                return 1;
+            return evaluate(ast->right, params);
             break;
         case AND:
             if (evaluate(ast->left, params))
@@ -226,7 +228,7 @@ int evaluate(struct ast *ast, struct params *params)
                     return expressions[i].function(params);
                 }
             }
-            func_failure("./myfind: Invalid expression type");
+            func_failure("./myfind: Invalid expression");
         break;
     }
     return 0;
@@ -244,9 +246,9 @@ int is_newer(struct params *params)
 {
     struct stat statbuff;
 
-    stat(params->argv[0], &statbuff);
+    lstat(params->argv[0], &statbuff);
     struct timespec timearg = statbuff.st_mtim;
-    stat(params->pathname, &statbuff);
+    lstat(params->pathname, &statbuff);
     struct timespec timepath = statbuff.st_mtim;
 
     // TODO: check why tv_nsec does not work
@@ -257,9 +259,16 @@ int group_own(struct params *params)
 {
     struct group *group = getgrnam(params->argv[0]);
     if (group == NULL)
-        return 0;
+    {
+        fprintf(
+            stderr,
+            "myfind: '%s' is not the name of a known group",
+            params->argv[0]
+        );
+        exit(EXIT_FAILURE);
+    }
     struct stat statbuff;
-    stat(params->pathname, &statbuff);
+    lstat(params->pathname, &statbuff);
 
     return group->gr_gid == statbuff.st_gid;
 }
@@ -268,9 +277,17 @@ int user_own(struct params *params)
 {
     struct passwd *user = getpwnam(params->argv[0]);
     if (user == NULL)
-        return 0;
+    {
+        fprintf(
+            stderr,
+            "myfind: '%s' is not the name of a known user",
+            params->argv[0]
+        );
+        exit(EXIT_FAILURE);
+    }
+
     struct stat statbuff;
-    stat(params->pathname, &statbuff);
+    lstat(params->pathname, &statbuff);
     return user->pw_uid == statbuff.st_uid;
 }
 
@@ -278,7 +295,6 @@ int has_name(struct params *params)
 {
     int offset = remove_ds(params->filename);
 
-    // printf("fnmatch: %d - params->filename: %s\n", fnmatch(params->argv[0], params->filename + offset, FNM_PATHNAME), params->filename + offset);
     if (fnmatch(params->argv[0], params->filename + offset, FNM_PATHNAME) == 0)
         return 1;
     return 0;
@@ -291,23 +307,23 @@ int has_type(struct params *params)
 
     switch (params->argv[0][0])
     {
-        case 'b':
-            return S_ISBLK(statbuff.st_mode);
-        case 'c':
-            return S_ISCHR(statbuff.st_mode);
-        case 'd':
-            return S_ISDIR(statbuff.st_mode);
-        case 'f':
-            return S_ISREG(statbuff.st_mode);
-        case 'l':
-            return S_ISLNK(statbuff.st_mode);
-        case 'p':
-            return S_ISFIFO(statbuff.st_mode);
-        case 's':
-            return S_ISSOCK(statbuff.st_mode);
-        default:
-            func_failure("./myfind: Invalid type argument");
-            break;
+    case 'b':
+        return S_ISBLK(statbuff.st_mode);
+    case 'c':
+        return S_ISCHR(statbuff.st_mode);
+    case 'd':
+        return S_ISDIR(statbuff.st_mode);
+    case 'f':
+        return S_ISREG(statbuff.st_mode);
+    case 'l':
+        return S_ISLNK(statbuff.st_mode);
+    case 'p':
+        return S_ISFIFO(statbuff.st_mode);
+    case 's':
+        return S_ISSOCK(statbuff.st_mode);
+    default:
+        error_exit(UNKN_ARG, "-type");
+        break;
     }
     return 1;
 }

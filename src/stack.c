@@ -19,6 +19,11 @@ struct stack *create_stack(void)
 
 void push_stack(struct stack *stack, struct token *token)
 {
+    if (stack->size == stack->capcity)
+    {
+        stack->capcity *= 2;
+        stack->array = realloc(stack->array, stack->capcity);
+    }
     if (stack->size < stack->capcity)
     {
         stack->array[stack->size] = token;

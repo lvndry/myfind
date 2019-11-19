@@ -1,8 +1,6 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#define UNUSED(x) (void)(x)
-
 # define MODE_WXUSR	(S_IWUSR | S_IXUSR)
 # define MODE_R		(S_IRUSR | S_IRGRP | S_IROTH)
 # define MODE_RW	(S_IWUSR | S_IWGRP | S_IWOTH | MODE_R)

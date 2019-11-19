@@ -11,28 +11,39 @@ void func_failure(char *message)
     exit(EXIT_FAILURE);
 }
 
-void parse_error(enum error_type type, char *error)
+void print_error(char *path,  char *error)
+{
+    fprintf(stderr, "./myfind: %s: %s\n", path, error);
+}
+
+void error_exit(enum error_type type, char *error)
 {
     switch (type)
     {
     case PARSE:
-        func_failure("./myfind: Error while parsing");
+        fprintf(stderr, "./myfind: Error while parsing\n");
         break;
     case MISS_ARG:
-        fprintf(stderr, "./myfind: Missing argument to `%s", error);
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "./myfind: Missing argument to `%s\n", error);
         break;
     case UNKN_PRED:
-        fprintf(stderr, "./myfind: Unkown predicate `%s", error);
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "./myfind: Unkown predicate `%s\n", error);
+        break;
+    case UNKN_ARG:
+        fprintf(stderr, "./myfind: Unknown argument to %s\n", error);
+        break;
+    case INV_ARG:
+        fprintf(stderr, "./myfind: Imvalid argument to %s\n", error);
+        break;
+    case PATH:
+        fprintf(stderr, "./myfind: paths must precede expression: %s", error);
+        break;
+    case PAREN:
+        fprintf(stderr, "./myfind invalid expression; %s", error);
         break;
     default:
-        func_failure("Something wrong happened");
+        fprintf(stderr, "Something wrong happened\n");
         break;
     }
-}
-
-void print_error(char *path,  char *error)
-{
-    fprintf(stderr, "./myfind: %s: %s\n", path, error);
+    exit(EXIT_FAILURE);
 }

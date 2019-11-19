@@ -39,12 +39,20 @@ struct expression
     int (*function)(struct params *params);
 };
 
+// ast functions
 struct ast *create_node(struct token *token);
 struct ast *constructTree(struct stack *postfix);
-int evaluate(struct ast* ast, struct params *params);
+int isParent(enum token_type type);
 void free_ast(struct ast *root);
+int evaluate(struct ast* ast, struct params *params);
 
-// Evaluation functions
+// ast_stack functions
+struct stack_ast *create_astack(void);
+void push_astack(struct stack_ast *stack, struct ast *node);
+struct ast *pop_astack(struct stack_ast *stack);
+void free_astack(struct stack_ast *stack);
+
+// evaluation functions
 int is_newer(struct params *params);
 int print(struct params *params);
 int group_own(struct params *params);

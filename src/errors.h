@@ -6,11 +6,15 @@ enum error_type
     PARSE,
     CMD_MALFORMED,
     UNKN_PRED,
-    MISS_ARG
+    MISS_ARG,
+    UNKN_ARG,
+    INV_ARG,
+    PATH,
+    PAREN,
 };
 
 void func_failure(char *message);
-void parse_error(enum error_type type, char *error);
+void error_exit(enum error_type type, char *error);
 void print_error(char *path, char *error);
 
 #endif
