@@ -2,7 +2,7 @@ CC= gcc
 CFLAGS= -Wall -Wextra -Werror -pedantic -std=c99 -g -fsanitize=address
 LDFLAGS= -fsanitize=address
 VPATH= src
-SRC= myfind.c ast.c errors.c parse.c stack.c utils.c
+SRC= myfind.c ast.c astlib.c errors.c parse.c parselib.c stack.c utils.c
 OBJS= $(SRC:.c=.o)
 BIN= myfind
 

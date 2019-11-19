@@ -26,19 +26,6 @@ struct opts_t
     int p;
 };
 
-int setOptions(struct opts_t *options, char *argv[], int start, int end);
-int getPaths(char *argv[], int start, int argc);
-void getFilename(char *filename, char*path, char *d_name);
-void getStat(char *filename, struct stat *statbuff, struct opts_t options);
-void setparams(
-    struct params *params,
-    char *pathname,
-    char *filename
-);
-int print_evaluate(struct ast *ast, char *pathname, char *filename);
-int ls(char *path, struct ast *ast, struct opts_t options);
-void myfind(char *path, struct ast *ast, struct opts_t options);
-
 void setoptsval(struct opts_t *options, struct opts_t newops)
 {
     options->l = newops.l;
@@ -90,14 +77,6 @@ int getPaths(char *argv[], int start, int argc)
     return argc - 1;
 }
 
-void getFilename(char *filename, char*path, char *d_name)
-{
-    if (strcmp(path, "/") == 0)
-        sprintf(filename, "%s%s", path, d_name);
-    else
-        sprintf(filename, "%s/%s", path, d_name);
-}
-
 void getStat(char *filename, struct stat *statbuff, struct opts_t options)
 {
     if (options.l)
@@ -132,7 +111,7 @@ int print_evaluate(struct ast *ast, char *pathname, char *filename)
     if (res == 1 && params.shouldprint == 1)
         printf("%s\n", pathname);
 
-    return res;
+    return res == 1 && params.shouldprint == 1;
 }
 
 int print_file(char *path, struct ast *ast, struct opts_t options)
@@ -155,7 +134,7 @@ int print_file(char *path, struct ast *ast, struct opts_t options)
 
 int ls(char *path, struct ast *ast, struct opts_t options)
 {
-    int evaluated = 0;
+    static int evaluated = 0;
     DIR *dir = opendir(path);
     if (dir == NULL)
         return print_file(path, ast, options);
@@ -179,18 +158,16 @@ int ls(char *path, struct ast *ast, struct opts_t options)
             if (S_ISDIR(statbuff.st_mode))
             {
                 if (evaluated == 0)
-                    print_evaluate(ast, filename, dname);
+                    evaluated = print_evaluate(ast, filename, dname);
                 ls(filename, ast, options);
             }
             else
-            {
                 print_evaluate(ast, filename, dname);
-            }
         }
     }
 
     if (options.d)
-        print_evaluate(ast, path, path);
+        evaluated = print_evaluate(ast, path, path);
 
     return closedir(dir);
 }

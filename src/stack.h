@@ -22,15 +22,18 @@ struct stack_ast
     int size;
 };
 
+// stack functions
 struct stack *create_stack(void);
 void push_stack(struct stack *stack, struct token *node);
 struct token *pop_stack(struct stack *stack);
 void free_stack(struct stack *stack);
+void destroy_stack(struct stack *stack);
 
-// ast_stack functions
+// stack_ast functions
 struct stack_ast *create_astack(void);
 void push_astack(struct stack_ast *stack, struct ast *node);
 struct ast *pop_astack(struct stack_ast *stack);
 void free_astack(struct stack_ast *stack);
+void destroy_astack(struct stack_ast *stack);
 
 #endif

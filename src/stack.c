@@ -49,10 +49,41 @@ void free_stack(struct stack *stack)
     free(stack);
 }
 
+void destroy_stack(struct stack *stack)
+{
+    for (int i = 0; i < stack->size; i++)
+    {
+        free(stack->array[i]->value);
+        free(stack->array[i]);
+    }
+
+    free_stack(stack);
+    stack = NULL;
+
+    return;
+}
+
 void print_stack(struct stack *stack)
 {
     for (int i = 0; i < stack->size; i++)
         printf("%d ", stack->array[i]->type);
+}
+void destroy_astack(struct stack_ast *stack)
+{
+    int i = 0;
+
+    while (stack->array[i])
+    {
+        free(stack->array[i]->token);
+        free(stack->array[i]);
+        stack->array[i] = NULL;
+        i++;
+    }
+
+    free_astack(stack);
+    stack = NULL;
+
+    return;
 }
 
 struct stack_ast *create_astack(void)

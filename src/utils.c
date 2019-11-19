@@ -103,6 +103,14 @@ void format_path(char *path)
         path[strlen(path) - 1] = '\0';
 }
 
+void getFilename(char *filename, char*path, char *d_name)
+{
+    if (strcmp(path, "/") == 0)
+        sprintf(filename, "%s%s", path, d_name);
+    else
+        sprintf(filename, "%s/%s", path, d_name);
+}
+
 /*
 char *build_exarg(char *dest, char *src, char *filename)
 {
