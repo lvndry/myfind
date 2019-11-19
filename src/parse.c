@@ -10,6 +10,23 @@
 
 #define SIZE 100
 
+// token parsing functions
+static struct token parse_oparen(char *argv[], int *cursor);
+static struct token parse_cparen(char *argv[], int *cursor);
+static struct token parse_or(char *argv[], int *cursor);
+static struct token parse_and(char *argv[], int *cursor);
+static struct token parse_not(char *argv[], int *cursor);
+static struct token parse_name(char *argv[], int *cursor);
+static struct token parse_type(char *argv[], int *cursor);
+static struct token parse_newer(char *argv[], int *cursor);
+static struct token parse_perm(char *argv[], int *cursor);
+static struct token parse_group(char *argv[], int *cursor);
+static struct token parse_user(char *argv[], int *cursor);
+static struct token parse_print(char *argv[], int *cursor);
+static struct token parse_delete(char *argv[], int *cursor);
+static struct token parse_exec(char *argv[], int *cursor);
+static struct token parse_execdir(char *argv[], int *cursor);
+
 struct parser parse_table[] = {
     // tests
     {"-name", parse_name},
@@ -199,7 +216,7 @@ struct stack *parse(char *argv[], int start, int end)
 // Operators functions
 
 // Still need to handle error like: find -o, -a
-struct token parse_and(char *argv[], int *cursor)
+static struct token parse_and(char *argv[], int *cursor)
 {
     if (argv[*cursor + 1] != NULL && argv[*cursor + 1][0] != '-')
         error_exit(PATH, argv[*cursor + 1]);
@@ -208,7 +225,7 @@ struct token parse_and(char *argv[], int *cursor)
     return token;
 }
 
-struct token parse_or(char *argv[], int *cursor)
+static struct token parse_or(char *argv[], int *cursor)
 {
     if (argv[*cursor + 1] != NULL && argv[*cursor + 1][0] != '-')
         error_exit(PATH,argv[*cursor + 1]);
@@ -218,7 +235,7 @@ struct token parse_or(char *argv[], int *cursor)
 }
 
 
-struct token parse_oparen(char *argv[], int *cursor)
+static struct token parse_oparen(char *argv[], int *cursor)
 {
     argv = argv;
     cursor = cursor;
@@ -227,7 +244,7 @@ struct token parse_oparen(char *argv[], int *cursor)
     return token;
 }
 
-struct token parse_cparen(char *argv[], int *cursor)
+static struct token parse_cparen(char *argv[], int *cursor)
 {
     argv = argv;
     cursor = cursor;
@@ -236,7 +253,7 @@ struct token parse_cparen(char *argv[], int *cursor)
     return token;
 }
 
-struct token parse_not(char *argv[], int *cursor)
+static struct token parse_not(char *argv[], int *cursor)
 {
     argv = argv;
     cursor = cursor;
@@ -247,7 +264,7 @@ struct token parse_not(char *argv[], int *cursor)
 
 // tests functions
 
-struct token parse_name(char *argv[], int* cursor)
+static struct token parse_name(char *argv[], int *cursor)
 {
     if (argv[*cursor + 1] == NULL)
         error_exit(MISS_ARG, argv[*cursor]);
@@ -259,7 +276,7 @@ struct token parse_name(char *argv[], int* cursor)
     return token;
 }
 
-struct token parse_type(char *argv[], int *cursor)
+static struct token parse_type(char *argv[], int *cursor)
 {
     if (argv[*cursor + 1] == NULL)
         error_exit(MISS_ARG, argv[*cursor]);
@@ -271,7 +288,7 @@ struct token parse_type(char *argv[], int *cursor)
     return token;
 }
 
-struct token parse_newer(char *argv[], int *cursor)
+static struct token parse_newer(char *argv[], int *cursor)
 {
     if (argv[*cursor + 1] == NULL)
         error_exit(MISS_ARG, argv[*cursor]);
@@ -283,7 +300,7 @@ struct token parse_newer(char *argv[], int *cursor)
     return token;
 }
 
-struct token parse_perm(char *argv[], int *cursor)
+static struct token parse_perm(char *argv[], int *cursor)
 {
     if (argv[*cursor + 1] == NULL)
         error_exit(MISS_ARG, argv[*cursor]);
@@ -295,7 +312,7 @@ struct token parse_perm(char *argv[], int *cursor)
     return token;
 }
 
-struct token parse_group(char *argv[], int *cursor)
+static struct token parse_group(char *argv[], int *cursor)
 {
     if (argv[*cursor + 1] == NULL)
         error_exit(MISS_ARG, argv[*cursor]);
@@ -307,7 +324,7 @@ struct token parse_group(char *argv[], int *cursor)
     return token;
 }
 
-struct token parse_user(char *argv[], int *cursor)
+static struct token parse_user(char *argv[], int *cursor)
 {
     if (argv[*cursor + 1] == NULL)
         error_exit(MISS_ARG, argv[*cursor]);
@@ -332,7 +349,7 @@ struct token parse_print(char *argv[], int* cursor)
     return token;
 }
 
-struct token parse_delete(char *argv[], int *cursor)
+static struct token parse_delete(char *argv[], int *cursor)
 {
     if (argv[*cursor + 1] != NULL && argv[*cursor + 1][0] != '-')
         error_exit(PATH, argv[*cursor + 1]);
@@ -340,7 +357,7 @@ struct token parse_delete(char *argv[], int *cursor)
     return token;
 }
 
-struct token parse_exec(char *argv[], int *cursor)
+static struct token parse_exec(char *argv[], int *cursor)
 {
     char **value = malloc(VALUE_SIZE * sizeof(char *));
     if (value == NULL)
@@ -381,7 +398,7 @@ struct token parse_exec(char *argv[], int *cursor)
     return token;
 }
 
-struct token parse_execdir(char *argv[], int *cursor)
+static struct token parse_execdir(char *argv[], int *cursor)
 {
     char **value = malloc(VALUE_SIZE * sizeof(char *));
     if (value == NULL)
