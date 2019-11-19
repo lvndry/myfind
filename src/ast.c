@@ -197,39 +197,35 @@ int evaluate(struct ast *ast, struct params *params)
         return 1;
     }
 
-    int len = sizeof(expressions) / sizeof(expressions[0]);
-    int i = 0;
+    size_t len = sizeof(expressions) / sizeof(expressions[0]);
+    size_t i = 0;
 
     switch (ast->token->type)
     {
-        case OR:
-            if (evaluate(ast->left, params))
-                return 1;
-            return evaluate(ast->right, params);
-            break;
-        case AND:
-            if (evaluate(ast->left, params))
-                return evaluate(ast->right, params);
-            return 0;
-            break;
-        case NOT:
-            return !evaluate(ast->right, params);
-            break;
-        default:
-            for (i = 0; i < len; i++)
-            {
-                if (ast->token->type == expressions[i].type)
-                {
-                    if (ast->token->category == ACTION)
-                        params->shouldprint = 0;
-                    else
-                        params->shouldprint = 1;
-                    params->argv = ast->token->value;
-                    return expressions[i].function(params);
-                }
-            }
-            func_failure("./myfind: Invalid expression");
+    case OR:
+        return (evaluate(ast->left, params) || evaluate(ast->right, params));
         break;
+    case AND:
+        return (evaluate(ast->left, params) && evaluate(ast->right, params));
+        break;
+    case NOT:
+        return !evaluate(ast->right, params);
+        break;
+    default:
+        for (i = 0; i < len; i++)
+        {
+            if (ast->token->type == expressions[i].type)
+            {
+                if (ast->token->category == ACTION)
+                    params->shouldprint = 0;
+                else
+                    params->shouldprint = 1;
+                params->argv = ast->token->value;
+                return expressions[i].function(params);
+            }
+        }
+        func_failure("./myfind: Invalid expression");
+    break;
     }
     return 0;
 }
@@ -251,7 +247,8 @@ int is_newer(struct params *params)
     lstat(params->pathname, &statbuff);
     struct timespec timepath = statbuff.st_mtim;
 
-    // TODO: check why tv_nsec does not work
+    if (timepath.tv_sec == timearg.tv_sec)
+        return timepath.tv_nsec > timearg.tv_nsec;
     return timepath.tv_sec > timearg.tv_sec;
 }
 

@@ -1,0 +1,16 @@
+---
+BasedOnStyle: LLVM
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+BraceWrapping: true
+BreakBeforeBraces: Allman
+IndentWidth: 4
+IncludeBlocks: IBS_Regroup
+IndentCaseLabels: false
+PointerAlignment: PAS_Right
+SortIncludes: true
+SpaceBeforeAssignmentOperators: true
+SpaceAfterLogicalNot: false
+SpacesInSquareBrackets: false
+ColumnLimit: 80
+---
