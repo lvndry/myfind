@@ -164,10 +164,7 @@ struct ast *constructTree(struct stack *postfix)
 int evaluate(struct ast *ast, struct params *params)
 {
     if (ast == NULL)
-    {
-        params->shouldprint = 1;
-        return 1;
-    }
+        return 0;
 
     size_t len = sizeof(expressions) / sizeof(expressions[0]);
     size_t i = 0;
@@ -196,7 +193,7 @@ int evaluate(struct ast *ast, struct params *params)
                 return expressions[i].function(params);
             }
         }
-        func_failure("./myfind: Invalid expression");
+        func_failure("./myfind  Invalid expression");
     break;
     }
     return 0;
@@ -367,31 +364,31 @@ static int execute(struct params *params)
     int i = 0;
     char *template = NULL;
 
-    for (i = 0; params->argv[i] != NULL; ++i)
-    {
-        // TODO: Handle several {} in same params->argv
-        if ((ptr = strstr(params->argv[i], "{}")) != NULL)
-        {
-            template = malloc(
-                sizeof(char) *
-                (sizeof(params->argv[i]) + sizeof(params->pathname)) + 1000
-            );
-            template[0] = 0;
+     for (i = 0; params->argv[i] != NULL; ++i)
+     {
+         ptr = params->argv[i];
+         while ((ptr = strstr(ptr, "{}")) != NULL)
+         {
+             // printf("%s\n", ptr);
+             template = realloc(
+                 template,
+                 sizeof(char) *
+                 ((sizeof(args[i]) + sizeof(params->filename)) + 1000)
+                );
             if (template == NULL)
-            {
-                perror("Malloc fail");
-                exit(EXIT_FAILURE);
-            }
+                func_failure("Malloc fail");
+            template[0] = 0;
+
             args[i] = create_template(
                 template,
                 params->argv[i],
-                ptr,
-                params->pathname,
+                &ptr,
+                params->filename,
                 0
             );
+            continue;
         }
-        else
-            args[i] = params->argv[i];
+        args[i] = params->argv[i];
     }
 
     args[i] = NULL;
@@ -427,36 +424,11 @@ static int execute(struct params *params)
 
 static int executedir(struct params *params)
 {
-    char *ptr;
+    // char *ptr;
+    params = params;
     char **args = malloc(sizeof(char) * 100);
     int i = 0;
     char *template = NULL;
-
-    for (i = 0; params->argv[i] != NULL; ++i)
-    {
-        // TODO: Handle several {} in same params->argv
-        if ((ptr = strstr(params->argv[i], "{}")) != NULL)
-        {
-            template = malloc(
-                sizeof(char) *
-                ((sizeof(params->argv[i]) + sizeof(params->filename)) + 1000)
-            );
-            template[0] = 0;
-
-            if (template == NULL)
-                func_failure("Malloc fail");
-
-            args[i] = create_template(
-                template,
-                params->argv[i],
-                ptr,
-                params->filename,
-                1
-            );
-        }
-        else
-            args[i] = params->argv[i];
-    }
 
     args[i] = NULL;
 

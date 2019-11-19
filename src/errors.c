@@ -33,13 +33,13 @@ void error_exit(enum error_type type, char *error)
         fprintf(stderr, "./myfind: Unknown argument to %s\n", error);
         break;
     case INV_ARG:
-        fprintf(stderr, "./myfind: Imvalid argument to %s\n", error);
+        fprintf(stderr, "./myfind: Invalid argument; %s\n", error);
         break;
     case PATH:
-        fprintf(stderr, "./myfind: paths must precede expression: %s", error);
+        fprintf(stderr, "./myfind: paths must precede expression: %s\n", error);
         break;
     case PAREN:
-        fprintf(stderr, "./myfind invalid expression; %s", error);
+        fprintf(stderr, "./myfind: invalid expression; %s\n", error);
         break;
     default:
         fprintf(stderr, "Something wrong happened\n");

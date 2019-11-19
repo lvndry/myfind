@@ -218,17 +218,30 @@ struct stack *parse(char *argv[], int start, int end)
 // Still need to handle error like: find -o, -a
 static struct token parse_and(char *argv[], int *cursor)
 {
-    if (argv[*cursor + 1] != NULL && argv[*cursor + 1][0] != '-')
-        error_exit(PATH, argv[*cursor + 1]);
-
+    if (*cursor == 1)
+    {
+        error_exit(
+            INV_ARG,
+            "you have used a binary operator '-o' with nothing before it."
+        );
+    }
+    if (argv[*cursor + 1] == NULL || argv[*cursor + 1][0] != '-')
+        error_exit(PATH, argv[*cursor]);
     struct token token = { AND, OPERATOR, NULL };
     return token;
 }
 
 static struct token parse_or(char *argv[], int *cursor)
 {
-    if (argv[*cursor + 1] != NULL && argv[*cursor + 1][0] != '-')
-        error_exit(PATH,argv[*cursor + 1]);
+    if (*cursor == 1)
+    {
+        error_exit(
+            INV_ARG,
+            "you have used a binary operator '-o' with nothing before it."
+        );
+    }
+    if (argv[*cursor + 1] == NULL || argv[*cursor + 1][0] != '-')
+        error_exit(PATH, argv[*cursor]);
 
     struct token token = { OR, OPERATOR, NULL };
     return token;

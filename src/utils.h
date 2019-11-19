@@ -14,7 +14,7 @@ int toOctal(int decimal);
 char *create_template(
     char *template,
     char *arg,
-    char *ptr,
+    char **ptr,
     char *pathname,
     int isDir
 );

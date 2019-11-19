@@ -59,13 +59,13 @@ int toOctal(int decimal)
 char *create_template(
     char *template,
     char *arg,
-    char *ptr,
+    char **ptr,
     char *pathname,
     int isDir
 )
 {
-    strncat(template, arg, ptr - arg);
-    template[ptr - arg] = '\0';
+    strncat(template, arg, *ptr - arg);
+    template[*ptr - arg] = '\0';
 
     if (isDir)
     {
@@ -82,8 +82,8 @@ char *create_template(
     else
         strcat(template, pathname);
 
-    ptr += 2;
-    strcat(template, ptr);
+    *ptr += 2;
+    strcat(template, *ptr);
 
     return template;
 }
