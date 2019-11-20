@@ -19,6 +19,8 @@
 
 int print(struct params *params)
 {
+    if (strcmp(params->pathname, params->filename) == 0)
+        return 1;
     printf("%s\n", params->pathname);
     return 1;
 }
@@ -29,9 +31,11 @@ int is_newer(struct params *params)
 {
     struct stat statbuff;
 
-    lstat(params->argv[0], &statbuff);
+    if (lstat(params->argv[0], &statbuff) == -1)
+        error_exit(-1, strerror(errno));
     struct timespec timearg = statbuff.st_mtim;
-    lstat(params->pathname, &statbuff);
+    if(lstat(params->pathname, &statbuff) == -1)
+        error_exit(-1, strerror(errno));
     struct timespec timepath = statbuff.st_mtim;
 
     if (timepath.tv_sec == timearg.tv_sec)
@@ -52,8 +56,8 @@ int group_own(struct params *params)
         exit(EXIT_FAILURE);
     }
     struct stat statbuff;
-    lstat(params->pathname, &statbuff);
-
+    if(lstat(params->pathname, &statbuff) == -1)
+         error_exit(-1, strerror(errno));
     return group->gr_gid == statbuff.st_gid;
 }
 
@@ -71,7 +75,8 @@ int user_own(struct params *params)
     }
 
     struct stat statbuff;
-    lstat(params->pathname, &statbuff);
+    if(lstat(params->pathname, &statbuff) == -1)
+        error_exit(-1, strerror(errno));
     return user->pw_uid == statbuff.st_uid;
 }
 
@@ -91,7 +96,8 @@ int has_name(struct params *params)
 int has_type(struct params *params)
 {
     struct stat statbuff;
-    lstat(params->pathname, &statbuff);
+    if(lstat(params->pathname, &statbuff) == -1)
+        error_exit(-1, strerror(errno));
 
     switch (params->argv[0][0])
     {
@@ -118,10 +124,11 @@ int has_type(struct params *params)
 
 int has_perm(struct params *params)
 {
-    struct stat buf;
-    stat(params->filename, &buf);
+    struct stat statbuff;
+    if(lstat(params->pathname, &statbuff) == -1)
+        error_exit(-1, strerror(errno));
 
-    __mode_t statchmod = buf.st_mode & MODE_ALL;
+    __mode_t statchmod = statbuff.st_mode & MODE_ALL;
 
     if (params->argv[0][0] == '-')
     {

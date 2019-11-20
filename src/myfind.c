@@ -116,6 +116,7 @@ int print_evaluate(struct ast *ast, char *pathname, char *filename)
 
 int print_file(char *path, struct ast *ast, struct opts_t options)
 {
+    int res = 0;
     if (access(path, F_OK) == -1)
         print_error(path, strerror(errno));
     else if(access(path, R_OK) == -1)
@@ -125,16 +126,19 @@ int print_file(char *path, struct ast *ast, struct opts_t options)
         print_error(path, strerror(errno));
         if (options.d)
             print_evaluate(ast, path, path);
-        return 1;
+        res = 1;
     }
     else
+    {
         print_evaluate(ast, path, path);
-    return 0;
+        res = 1;
+    }
+    return res;
 }
 
 int ls(char *path, struct ast *ast, struct opts_t options)
 {
-    static int evaluated = 0;
+    int evaluated = 0;
     DIR *dir = opendir(path);
     if (dir == NULL)
         return print_file(path, ast, options);
@@ -142,8 +146,11 @@ int ls(char *path, struct ast *ast, struct opts_t options)
     struct dirent *file;
     char filename[PATH_MAX];
 
-    if (!options.d)
+    if (evaluated == 0 && !options.d)
         evaluated = print_evaluate(ast, path, path);
+
+    char *original = malloc(strlen(path) + 1);
+    strcpy(original, path);
 
     format_path(path);
 
@@ -157,18 +164,21 @@ int ls(char *path, struct ast *ast, struct opts_t options)
             getStat(filename, &statbuff, options);
             if (S_ISDIR(statbuff.st_mode))
             {
-                if (evaluated == 0)
+                if (evaluated == 0 && !options.d)
                     evaluated = print_evaluate(ast, filename, dname);
                 ls(filename, ast, options);
+                if (evaluated == 0 && options.d)
+                    evaluated = print_evaluate(ast, filename, dname);
             }
             else
-                print_evaluate(ast, filename, dname);
+                evaluated = print_evaluate(ast, filename, dname);
         }
     }
 
     if (options.d)
-        evaluated = print_evaluate(ast, path, path);
+        evaluated = print_evaluate(ast, original, original);
 
+    free(original);
     return closedir(dir);
 }
 

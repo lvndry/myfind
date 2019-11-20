@@ -18,7 +18,8 @@ $(BIN): $(OBJS)
 debug: $(OBJS)
 	$(CC) $(CFLAGS) -g -o debug $^
 
-check: ./tests/test.sh
+check: $(BIN)
+	./tests/test.sh
 
 clean:
 	$(RM) $(OBJS) $(BIN) *.swp *.log

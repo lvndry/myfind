@@ -9,7 +9,7 @@
 #include "stack.h"
 #include "astlib.h"
 
-// to delete
+// TODO: delete
 void inorder(struct ast *node)
 {
     if (node != NULL)

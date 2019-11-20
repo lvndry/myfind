@@ -42,7 +42,7 @@ void error_exit(enum error_type type, char *error)
         fprintf(stderr, "./myfind: invalid expression; %s\n", error);
         break;
     default:
-        fprintf(stderr, "Something wrong happened\n");
+        fprintf(stderr, "./myfind: %s\n", error);
         break;
     }
     exit(EXIT_FAILURE);
