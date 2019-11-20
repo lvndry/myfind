@@ -4,6 +4,7 @@
         "fcntl.h": "c",
         "stdlib.h": "c",
         "ast.h": "c",
-        "dirent.h": "c"
+        "dirent.h": "c",
+        "functional": "c"
     }
 }

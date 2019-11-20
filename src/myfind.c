@@ -111,7 +111,7 @@ int print_evaluate(struct ast *ast, char *pathname, char *filename)
     if (res == 1 && params.shouldprint == 1)
         printf("%s\n", pathname);
 
-    return res == 1 && params.shouldprint == 1;
+    return res == 1;
 }
 
 int print_file(char *path, struct ast *ast, struct opts_t options)

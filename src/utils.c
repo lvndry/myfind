@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <linux/limits.h>
 
 #include <stdio.h>
 #include "errors.h"
@@ -111,30 +112,53 @@ void getFilename(char *filename, char*path, char *d_name)
         sprintf(filename, "%s/%s", path, d_name);
 }
 
-/*
-char *build_exarg(char *dest, char *src, char *filename)
+// args have to be freed at the end of function call
+char **build_args(char **argv, char **template, char *pathname, int exdir)
 {
-    char *template = NULL;
+    int i = 0;
+    char *arg;
+    char **args = malloc(sizeof(char *) * 2000);
 
-    while ((src = strstr(src, "{}")) != NULL)
+    for (i = 0; argv[i] != NULL; ++i)
     {
-        template = realloc(
-            template,
-            sizeof(char) *
-            ((sizeof(src) + sizeof(filename)) + 1000)
-        );
-        if (template == NULL)
-            func_failure("Malloc fail");
-        template[0] = 0;
-
-        dest = create_template(
-            template,
-            src,
-            &src,
-            filename,
-            0
-        );
+        arg = argv[i];
+        char *fc = strstr(arg, "{}");
+        if (fc == NULL)
+        {
+            args[i] = arg;
             continue;
+        }
+
+        *template = malloc(sizeof(fc - arg) + 1);
+
+        strncpy(*template, arg, fc - arg);
+        template[0][fc - arg] = '\0';
+
+        int n = 0;
+        while ((arg = strstr(arg, "{}")) != NULL)
+        {
+            *template = realloc(
+                *template,
+                sizeof(char) *
+                (sizeof(*template) + sizeof(pathname) + PATH_MAX)
+            );
+
+            if (*template == NULL)
+                func_failure("Malloc fail");
+
+            if (exdir)
+                strcat(*template, "./");
+
+            strcat(*template, pathname);
+            arg += 2;
+            n += 1;
+        }
+
+        strcat(*template, fc + 2 * n);
+        args[i] = *template;
     }
+
+     args[i] = NULL;
+
+     return args;
 }
-*/

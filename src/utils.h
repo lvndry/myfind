@@ -21,5 +21,6 @@ char *create_template(
 int is_valid_name(char *path);
 void format_path(char *path);
 void getFilename(char *filename, char*path, char *d_name);
+char **build_args(char**argv, char **template, char *pathname, int isDir);
 
 #endif

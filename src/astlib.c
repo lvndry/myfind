@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <fnmatch.h>
 #include <grp.h>
+#include <libgen.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -186,52 +187,15 @@ int rm(struct params *params)
     return 0;
 }
 
-int execute(struct params *params)
+int exec_child(char **args, char *template)
 {
-    char *ptr;
-    char **args = malloc(sizeof(char) * 100);
-    int i = 0;
-    char *template = NULL;
-
-     for (i = 0; params->argv[i] != NULL; ++i)
-     {
-         ptr = params->argv[i];
-         while ((ptr = strstr(ptr, "{}")) != NULL)
-         {
-             // printf("%s\n", ptr);
-             template = realloc(
-                 template,
-                 sizeof(char) *
-                 ((sizeof(args[i]) + sizeof(params->filename)) + 1000)
-                );
-            if (template == NULL)
-                func_failure("Malloc fail");
-            template[0] = 0;
-
-            args[i] = create_template(
-                template,
-                params->argv[i],
-                &ptr,
-                params->filename,
-                0
-            );
-            continue;
-        }
-        args[i] = params->argv[i];
-    }
-
-    args[i] = NULL;
-
     pid_t pid = fork();
     if (pid == -1)
-    {
-        fprintf(stderr, "./myfind: %s\n", strerror(errno));
-        exit(EXIT_FAILURE);
-    }
+        error_exit(-1, strerror(errno));
     else if (pid == 0)
     {
         execvp(args[0], args);
-        return 0;
+        exit(errno);
     }
     else
     {
@@ -240,8 +204,10 @@ int execute(struct params *params)
         if (template != NULL)
             free(template);
         free(args);
-
-        return !WEXITSTATUS(status);
+        if (WIFEXITED(status))
+            return !WEXITSTATUS(status);
+        print_error("execvp", strerror(errno));
+        return 0;
     }
 
     if (template != NULL)
@@ -251,42 +217,19 @@ int execute(struct params *params)
     return 0;
 }
 
+int execute(struct params *params)
+{
+    char *template = NULL;
+    char **args = build_args(params->argv, &template, params->pathname, 0);
+    return exec_child(args, template);
+}
+
 int executedir(struct params *params)
 {
-    // char *ptr;
-    params = params;
-    char **args = malloc(sizeof(char) * 100);
-    int i = 0;
     char *template = NULL;
-
-    args[i] = NULL;
-
-    pid_t pid = fork();
-    if (pid == -1)
-    {
-        fprintf(stderr, "./myfind: %s\n", strerror(errno));
-        exit(EXIT_FAILURE);
-    }
-    else if (pid == 0)
-    {
-        execvp(args[0], args);
-        return 0;
-    }
-    else
-    {
-        int status;
-        waitpid(pid, &status, 0);
-        if (template != NULL)
-            free(template);
-        free(args);
-        return WEXITSTATUS(status);
-    }
-
-    if (template != NULL)
-        free(template);
-    free(args);
-
-    return 0;
+    char *filename = basename(params->filename);
+    char **args = build_args(params->argv, &template, filename, 1);
+    return exec_child(args, template);
 }
 
 // Here I suppose that the exec + is correctly parsed and that

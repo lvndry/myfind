@@ -37,7 +37,6 @@ struct token parse_or(char *argv[], int *cursor)
     return token;
 }
 
-
 struct token parse_oparen(char *argv[], int *cursor)
 {
     argv = argv;
@@ -58,8 +57,8 @@ struct token parse_cparen(char *argv[], int *cursor)
 
 struct token parse_not(char *argv[], int *cursor)
 {
-    argv = argv;
-    cursor = cursor;
+    if (argv[*cursor + 1] == NULL)
+        error_exit(MISS_ARG, argv[*cursor]);
 
     struct token token = { NOT, OPERATOR, NULL };
     return token;
@@ -162,7 +161,7 @@ struct token parse_delete(char *argv[], int *cursor)
 
 struct token parse_exec(char *argv[], int *cursor)
 {
-    char **value = malloc(VALUE_SIZE * sizeof(char *));
+    char **value = malloc(VALUE_SIZE * sizeof(char *) * 500);
     if (value == NULL)
        func_failure("malloc fail");
 
@@ -203,28 +202,23 @@ struct token parse_exec(char *argv[], int *cursor)
 
 struct token parse_execdir(char *argv[], int *cursor)
 {
-    char **value = malloc(VALUE_SIZE * sizeof(char *));
+    char **value = malloc(VALUE_SIZE * sizeof(char *) * 500);
     if (value == NULL)
        func_failure("malloc fail");
 
     int i;
     *cursor += 1;
 
-    for (
-        i = 0;
-        argv[*cursor + i] != NULL
-        && (argv[*cursor + i][0] != ';' || (argv[*cursor + i][1] != '\0'));
-        i++
-    )
+    for (i = 0; argv[*cursor + i] != NULL && (argv[*cursor + i][0] != ';'); i++)
     {
         value[i] = argv[*cursor + i];
     }
 
     if (i == 0)
-        error_exit(INV_ARG, "-exec");
+        error_exit(INV_ARG, "-execdir");
 
     if (argv[*cursor + i] == NULL)
-        error_exit(MISS_ARG, "-exec");
+        error_exit(MISS_ARG, "-execdir");
 
     value[i] = NULL;
 
