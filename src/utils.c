@@ -3,12 +3,13 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
-#include <linux/limits.h>
-
+#include <limits.h>
 #include <stdio.h>
-#include "errors.h"
 
-// File manipulation
+#include "errors.h"
+#include "memory.h"
+
+// file manipulation
 int islink(const char *path)
 {
     struct stat buff;
@@ -26,7 +27,7 @@ int remove_ds(char *path)
     return 0;
 }
 
-// Numerical
+// numerical
 int isNumeric(const char * str)
 {
     if (str == NULL || *str == '\0' || isspace(*str))
@@ -60,39 +61,7 @@ int toOctal(int decimal)
     return octalnum;
 }
 
-// String
-char *create_template(
-    char *template,
-    char *arg,
-    char **ptr,
-    char *pathname,
-    int isDir
-)
-{
-    strncat(template, arg, *ptr - arg);
-    template[*ptr - arg] = '\0';
-
-    if (isDir)
-    {
-        strcat(template, "./");
-        char *lsl = strrchr(pathname, '/');
-        if (lsl == NULL)
-            strcat(template, pathname);
-        else
-        {
-            lsl += 1;
-            strcat(template, lsl);
-        }
-    }
-    else
-        strcat(template, pathname);
-
-    *ptr += 2;
-    strcat(template, *ptr);
-
-    return template;
-}
-
+// string
 int is_valid_name(char *path)
 {
     return (strcmp(path, ".") != 0 && strcmp(path, "..") != 0);
@@ -116,41 +85,35 @@ void getFilename(char *filename, char*path, char *d_name)
 char **build_args(char **argv, char **template, char *pathname, int exdir)
 {
     int i = 0;
-    char *arg;
-    char **args = malloc(sizeof(char *) * 2000);
+    char **args = xmalloc(sizeof(char *) * 2000);
 
     for (i = 0; argv[i] != NULL; ++i)
     {
-        arg = argv[i];
-        char *fc = strstr(arg, "{}");
+        char *fc = strstr(argv[i], "{}");
         if (fc == NULL)
         {
-            args[i] = arg;
+            args[i] = argv[i];
             continue;
         }
 
-        *template = malloc(sizeof(fc - arg) + 1);
+        *template = malloc(sizeof(fc - argv[i]) + 1);
 
-        strncpy(*template, arg, fc - arg);
-        template[0][fc - arg] = '\0';
+        strncpy(*template, argv[i], fc - argv[i]);
+        template[0][fc - argv[i]] = '\0';
 
         int n = 0;
-        while ((arg = strstr(arg, "{}")) != NULL)
+        while ((argv[i] = strstr(argv[i], "{}")) != NULL)
         {
-            *template = realloc(
+            *template = xrealloc(
                 *template,
-                sizeof(char) *
-                (sizeof(*template) + sizeof(pathname) + PATH_MAX)
+                sizeof(char) * (strlen(*template) + strlen(pathname) + 2)
             );
-
-            if (*template == NULL)
-                func_failure("Malloc fail");
 
             if (exdir)
                 strcat(*template, "./");
 
             strcat(*template, pathname);
-            arg += 2;
+            argv[i] += 2;
             n += 1;
         }
 

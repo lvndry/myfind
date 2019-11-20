@@ -36,7 +36,7 @@ struct expression
 struct ast *create_node(struct token *token);
 struct ast *constructTree(struct stack *postfix);
 int isParent(enum token_type type);
-void free_ast(struct ast *root);
 int evaluate(struct ast* ast, struct params *params);
+void free_ast(struct ast *root);
 
 #endif

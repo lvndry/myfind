@@ -3,11 +3,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "actionexp.h"
 #include "ast.h"
 #include "errors.h"
 #include "utils.h"
 #include "stack.h"
-#include "astlib.h"
+#include "testexp.h"
 
 // TODO: delete
 void inorder(struct ast *node)
@@ -148,7 +149,6 @@ int evaluate(struct ast *ast, struct params *params)
         return 0;
 
     size_t len = sizeof(expressions) / sizeof(expressions[0]);
-    size_t i = 0;
 
     switch (ast->token->type)
     {
@@ -162,7 +162,7 @@ int evaluate(struct ast *ast, struct params *params)
         return !evaluate(ast->right, params);
         break;
     default:
-        for (i = 0; i < len; i++)
+        for (size_t i = 0; i < len; i++)
         {
             if (ast->token->type == expressions[i].type)
             {

@@ -14,6 +14,7 @@
 
 #include "ast.h"
 #include "errors.h"
+#include "memory.h"
 #include "parse.h"
 #include "stack.h"
 #include "utils.h"
@@ -138,7 +139,6 @@ int print_file(char *path, struct ast *ast, struct opts_t options)
 
 int ls(char *path, struct ast *ast, struct opts_t options)
 {
-    int evaluated = 0;
     DIR *dir = opendir(path);
     if (dir == NULL)
         return print_file(path, ast, options);
@@ -146,10 +146,10 @@ int ls(char *path, struct ast *ast, struct opts_t options)
     struct dirent *file;
     char filename[PATH_MAX];
 
-    if (evaluated == 0 && !options.d)
-        evaluated = print_evaluate(ast, path, path);
+    if (!options.d)
+        print_evaluate(ast, path, path);
 
-    char *original = malloc(strlen(path) + 1);
+    char *original = xmalloc(strlen(path) + 1);
     strcpy(original, path);
 
     format_path(path);
@@ -157,26 +157,20 @@ int ls(char *path, struct ast *ast, struct opts_t options)
     while ((file = readdir(dir)) != NULL)
     {
         char *dname = file->d_name;
-        getFilename(filename, path, dname);
         if (is_valid_name(dname))
         {
+            getFilename(filename, path, dname);
             struct stat statbuff;
             getStat(filename, &statbuff, options);
             if (S_ISDIR(statbuff.st_mode))
-            {
-                if (evaluated == 0 && !options.d)
-                    evaluated = print_evaluate(ast, filename, dname);
                 ls(filename, ast, options);
-                if (evaluated == 0 && options.d)
-                    evaluated = print_evaluate(ast, filename, dname);
-            }
             else
-                evaluated = print_evaluate(ast, filename, dname);
+                print_evaluate(ast, filename, dname);
         }
     }
 
     if (options.d)
-        evaluated = print_evaluate(ast, original, original);
+        print_evaluate(ast, original, original);
 
     free(original);
     return closedir(dir);
@@ -189,6 +183,7 @@ void myfind(char *path, struct ast *ast, struct opts_t options)
     else
     {
         ls(path, ast, options);
+        // evaluate(ast, NULL, NULL) for exec \+
     }
 }
 
