@@ -1,18 +1,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "stack.h"
 #include "errors.h"
+#include "memory.h"
+#include "stack.h"
 
 struct stack *create_stack(void)
 {
-    struct stack *stack = malloc(sizeof(struct stack));
+    struct stack *stack = xmalloc(sizeof(struct stack));
     if (stack == NULL)
-        func_failure("Malloc fail");
+        func_failure("malloc fail");
 
     stack->capcity = CAPACITY;
     stack->size = 0;
-    stack->array = malloc(sizeof(struct token *) * CAPACITY);
+    stack->array = xmalloc(sizeof(struct token *) * CAPACITY);
 
     return stack;
 }
@@ -89,14 +90,14 @@ void destroy_astack(struct stack_ast *stack)
 
 struct stack_ast *create_astack(void)
 {
-    struct stack_ast *stack = malloc(sizeof(struct stack_ast));
+    struct stack_ast *stack = xmalloc(sizeof(struct stack_ast));
 
     if (stack == NULL)
-        func_failure("Malloc fail");
+        func_failure("malloc fail");
 
     stack->capcity = CAPACITY;
     stack->size = 0;
-    stack->array = malloc(sizeof(struct ast) * CAPACITY);
+    stack->array = xmalloc(sizeof(struct ast) * CAPACITY);
 
     return stack;
 }

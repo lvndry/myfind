@@ -125,28 +125,23 @@ int has_perm(struct params *params)
     if(lstat(params->pathname, &statbuff) == -1)
         error_exit(-1, strerror(errno));
 
-    __mode_t statchmod = statbuff.st_mode & MODE_ALL;
+    __mode_t statchmod = statbuff.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
+    __mode_t filemode;
 
     if (params->argv[0][0] == '-')
     {
-        char *cpy = *(params->argv) + 1;
-        __mode_t argmode = atoi(cpy);
-        int octmod = toOctal(statchmod);
-        return (octmod & argmode) == argmode;
+        sscanf(params->argv[0], "-%o", &filemode);
+        return (filemode & statchmod) == statchmod;
     }
     else if (params->argv[0][0] == '/')
     {
-        // Check every bytes and see if a user can do it
-        char *cpy = *(params->argv) + 1;
-        __mode_t argmode = atoi(cpy);
-            return 1;
-        return (statchmod & argmode) != 0;
+        sscanf(params->argv[0], "/%o", &filemode);
+        return (filemode & statchmod) != 0;
     }
     else if (isNumeric(params->argv[0]))
     {
-        int argmod = atoi(params->argv[0]);
-        int octmod = toOctal(statchmod);
-        return octmod == argmod;
+        sscanf(params->argv[0], "%o", &filemode);
+        return filemode == statchmod;
     }
     else
     {

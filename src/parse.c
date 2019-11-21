@@ -4,10 +4,12 @@
 #include <stdbool.h>
 
 #include "errors.h"
+#include "memory.h"
 #include "parse.h"
+#include "parseor.h"
+#include "parseand.h"
 #include "stack.h"
 #include "utils.h"
-#include "parselib.h"
 
 #define SIZE 100
 
@@ -98,12 +100,12 @@ struct token *create_token(
     char **value
 )
 {
-    struct token *token = malloc(sizeof(struct token));
+    struct token *token = xmalloc(sizeof(struct token));
     token->type = type;
     token->category = category;
     if (value == NULL)
     {
-        value = malloc(sizeof(char *) * 20);
+        value = xmalloc(sizeof(char *) * 20);
         if (value == NULL)
             func_failure("malloc fail");
     }

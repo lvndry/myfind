@@ -30,35 +30,18 @@ int remove_ds(char *path)
 // numerical
 int isNumeric(const char *str)
 {
-    if (str == NULL || *str == '\0' || isspace(*str))
-      return 0;
     size_t len = strlen(str);
-    for (size_t i = 0; i < len; i++)
+
+    if (len == 0 || str == NULL || *str == '\0' || isspace(*str))
+      return 0;
+
+    for (size_t i = 0; i < len; ++i)
     {
         if(str[i] < '0' || str[i] > '9')
             return 0;
     }
 
     return 1;
-}
-
-int toOctal(int decimal)
-{
-    int octaltab[10];
-    int octalnum = 0;
-    int i;
-    int j;
-
-    for(i = 0; decimal > 0; i++)
-    {
-        octaltab[i] = decimal % 8;
-        decimal /= 8;
-    }
-
-    for(j = i - 1; j >= 0; j--)
-        octalnum = octalnum * 10 + octaltab[j];
-
-    return octalnum;
 }
 
 // string

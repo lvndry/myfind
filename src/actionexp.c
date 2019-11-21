@@ -49,7 +49,7 @@ int exec_child(char **args, char *template, char *direcory)
         if (WIFEXITED(status))
             return !WEXITSTATUS(status);
         print_error("execvp", strerror(errno));
-        return 0;
+        return status;
     }
 
     if (template != NULL)
@@ -70,8 +70,9 @@ int executedir(struct params *params)
 {
     char *template = NULL;
     char *dup = strdup(params->pathname);
+    char *filename = basename(params->filename);
     char *directory = dirname(dup);
-    char **args = build_args(params->argv, &template, params->filename, 1);
+    char **args = build_args(params->argv, &template, filename, 1);
     int res = exec_child(args, template, directory);
     free(dup);
     return res;
@@ -87,8 +88,7 @@ int executeplus(struct params *params)
     if (params->filename == NULL)
     {
         // exec all
-        char **args = xmalloc(sizeof(char *)
-        * (sizeof(execvalue) + nfiles + 10));
+        char **args = xmalloc(sizeof(char *) * (nfiles + 10));
 
         int i = 0;
         while (strcmp(params->argv[i], "{}") != 0)

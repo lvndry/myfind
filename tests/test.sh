@@ -4,9 +4,9 @@ function check
 {
 	var="$*"
   echo "Testing ./myfind $var vs find $var"
-  ./myfind ${var} > a.log
-	find ${var} > b.log
-	DIFF=$(diff a.log b.log)
+  ./myfind ${var} > myfind.log
+	find ${var} > find.log
+	DIFF=$(diff --color=always myfind.log find.log)
 	if [ "$DIFF" != "" ]
 	then
 		printf "%b\n" "$var"
@@ -55,3 +55,4 @@ check src -execdir "echo" "{}" ";"
 check foo -exec "pwd" ";" -exec "echo" "--" "{}" "--" ";"
 check foo -exec "echo" "ok" ";"
 check foo -execdir "echo" "--" "{}" "--" ";"
+check foo -execdir "echo" "--" "{}" "--" "+"

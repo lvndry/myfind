@@ -6,9 +6,10 @@
 #include "actionexp.h"
 #include "ast.h"
 #include "errors.h"
-#include "utils.h"
+#include "memory.h"
 #include "stack.h"
 #include "testexp.h"
+#include "utils.h"
 
 // TODO: delete
 void inorder(struct ast *node)
@@ -72,7 +73,7 @@ struct expression expressions[] = {
 
 struct ast *create_node(struct token *token)
 {
-    struct ast *ast = malloc(sizeof(struct ast));
+    struct ast *ast = xmalloc(sizeof(struct ast));
 
     ast->token = token;
     ast->right = NULL;
