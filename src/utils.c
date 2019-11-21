@@ -89,31 +89,30 @@ char **build_args(char **argv, char **template, char *pathname, int exdir)
 
     for (i = 0; argv[i] != NULL; ++i)
     {
-        char *fc = strstr(argv[i], "{}");
+        char *arg = argv[i];
+        char *fc = strstr(arg, "{}");
         if (fc == NULL)
         {
-            args[i] = argv[i];
+            args[i] = arg;
             continue;
         }
 
-        *template = malloc(sizeof(fc - argv[i]) + 1);
+        *template = malloc(sizeof(fc - arg) + 1);
 
-        strncpy(*template, argv[i], fc - argv[i]);
-        template[0][fc - argv[i]] = '\0';
+        strncpy(*template, arg, fc - arg);
+        template[0][fc - arg] = '\0';
 
         int n = 0;
-        while ((argv[i] = strstr(argv[i], "{}")) != NULL)
+        while ((arg = strstr(arg, "{}")) != NULL)
         {
-            *template = xrealloc(
-                *template,
-                sizeof(char) * (strlen(*template) + strlen(pathname) + 2)
-            );
+            *template = xrealloc(*template,
+                sizeof(char) * (strlen(*template) + strlen(pathname) + 5));
 
             if (exdir)
                 strcat(*template, "./");
 
             strcat(*template, pathname);
-            argv[i] += 2;
+            arg += 2;
             n += 1;
         }
 
@@ -122,6 +121,5 @@ char **build_args(char **argv, char **template, char *pathname, int exdir)
     }
 
      args[i] = NULL;
-
      return args;
 }

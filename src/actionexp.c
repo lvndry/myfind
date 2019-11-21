@@ -26,13 +26,15 @@ int rm(struct params *params)
     return 0;
 }
 
-int exec_child(char **args, char *template)
+int exec_child(char **args, char *template, char *direcory)
 {
     pid_t pid = fork();
     if (pid == -1)
         error_exit(-1, strerror(errno));
     else if (pid == 0)
     {
+        if (direcory != NULL)
+            chdir(direcory);
         execvp(args[0], args);
         exit(errno);
     }
@@ -60,15 +62,18 @@ int execute(struct params *params)
 {
     char *template = NULL;
     char **args = build_args(params->argv, &template, params->pathname, 0);
-    return exec_child(args, template);
+    return exec_child(args, template, NULL);
 }
 
 int executedir(struct params *params)
 {
     char *template = NULL;
-    char *filename = basename(params->filename);
-    char **args = build_args(params->argv, &template, filename, 1);
-    return exec_child(args, template);
+    char *dup = strdup(params->pathname);
+    char *directory = dirname(dup);
+    char **args = build_args(params->argv, &template, params->filename, 1);
+    int res = exec_child(args, template, directory);
+    free(dup);
+    return res;
 }
 
 // Here I suppose that the exec + is correctly parsed and that
