@@ -166,6 +166,8 @@ int evaluate(struct ast *ast, struct params *params)
         {
             if (ast->token->type == expressions[i].type)
             {
+                if (params->pathname == NULL && ast->token->type != EXECPLUS)
+                    return 0;
                 if (ast->token->category == ACTION)
                     params->shouldprint = 0;
                 else

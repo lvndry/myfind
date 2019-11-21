@@ -3,7 +3,6 @@
 
 enum error_type
 {
-    PARSE,
     CMD_MALFORMED,
     UNKN_PRED,
     MISS_ARG,

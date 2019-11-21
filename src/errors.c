@@ -20,9 +20,6 @@ void error_exit(enum error_type type, char *error)
 {
     switch (type)
     {
-    case PARSE:
-        fprintf(stderr, "./myfind: Error while parsing\n");
-        break;
     case MISS_ARG:
         fprintf(stderr, "./myfind: Missing argument to `%s\n", error);
         break;

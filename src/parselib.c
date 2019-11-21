@@ -188,6 +188,9 @@ struct token parse_exec(char *argv[], int *cursor)
     struct token token = { EXEC, ACTION, value };
     if (argv[*cursor + i][0] == '+')
     {
+        if (argv[*cursor][0] != '{' || argv[*cursor][1] != '}')
+            error_exit(MISS_ARG, "-exec+");
+
         token.type = EXECPLUS;
         i++;
     }

@@ -28,7 +28,7 @@ int remove_ds(char *path)
 }
 
 // numerical
-int isNumeric(const char * str)
+int isNumeric(const char *str)
 {
     if (str == NULL || *str == '\0' || isspace(*str))
       return 0;
@@ -97,7 +97,7 @@ char **build_args(char **argv, char **template, char *pathname, int exdir)
             continue;
         }
 
-        *template = malloc(sizeof(fc - arg) + 1);
+        *template = xmalloc(sizeof(fc - arg) + 1);
 
         strncpy(*template, arg, fc - arg);
         template[0][fc - arg] = '\0';

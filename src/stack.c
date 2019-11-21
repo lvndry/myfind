@@ -68,6 +68,7 @@ void print_stack(struct stack *stack)
     for (int i = 0; i < stack->size; i++)
         printf("%d ", stack->array[i]->type);
 }
+
 void destroy_astack(struct stack_ast *stack)
 {
     int i = 0;

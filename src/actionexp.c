@@ -15,6 +15,7 @@
 
 #include "ast.h"
 #include "errors.h"
+#include "memory.h"
 #include "utils.h"
 #include "stack.h"
 
@@ -80,61 +81,53 @@ int executedir(struct params *params)
 // I only have to replace the last {} by the list of files
 int executeplus(struct params *params)
 {
-    size_t sizelen = 0;
-    int fileslen = 0;
+    static int nfiles = 0;
+    static char **execvalue = NULL;
 
     if (params->filename == NULL)
     {
         // exec all
-        char **args = malloc(sizeof(char *)
-        * (100 + sizeof(params->execvalue) + fileslen));
-        int i = 0;
+        char **args = xmalloc(sizeof(char *)
+        * (sizeof(execvalue) + nfiles + 10));
 
+        int i = 0;
         while (strcmp(params->argv[i], "{}") != 0)
         {
             args[i] = params->argv[i];
             i++;
         }
 
-        memcpy(args + i, params->execvalue, sizelen);
+        memcpy(args + i, execvalue, sizeof(char *) * nfiles);
 
         pid_t pid = fork();
         if (pid == -1)
-        {
-            fprintf(stderr, "./myfind: %s\n", strerror(errno));
-            exit(EXIT_FAILURE);
-        }
+            error_exit(-1, strerror(errno));
         else if (pid == 0)
         {
             execvp(args[0], args);
-            return 0;
+            exit(errno);
         }
         else
         {
             int status;
             waitpid(pid, &status, 0);
-            if (params->execvalue != NULL)
-                free(params->execvalue);
+            free_execargs(execvalue, nfiles);
+            execvalue = NULL;
             free(args);
-            params->execvalue = NULL;
             if (WIFEXITED(status) == 0)
                 return WEXITSTATUS(status);
             return 0;
         }
 
-        if (params->execvalue != NULL)
-            free(params->execvalue);
+        free_execargs(execvalue, nfiles);
         free(args);
     }
     else
     {
-        params->execvalue = realloc(
-            params->execvalue,
-            (sizeof(char *) * sizelen) + (sizeof(char *) * strlen(params->pathname) + 1)
-        );
-        params->execvalue[fileslen] = malloc(sizeof(char) * strlen(params->pathname) + 1);
-        strcpy(params->execvalue[fileslen++], params->pathname);
-        sizelen += strlen(params->pathname) + 1;
+        execvalue = xrealloc(execvalue, (sizeof(char *) * (nfiles + 2)));
+        execvalue[nfiles] = xmalloc(strlen(params->pathname) + 1);
+        strcpy(execvalue[nfiles], params->pathname);
+        nfiles += 1;
     }
 
     return 0;

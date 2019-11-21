@@ -17,3 +17,12 @@ void *xrealloc(void *ptr, size_t size)
         func_failure("realloc fail");
     return ptr;
 }
+
+void free_execargs(char **execvalue, int len)
+{
+    if (execvalue == NULL || len == 0)
+        return;
+    for (int i = 0; i < len; i++)
+        free(execvalue[i]);
+    free(execvalue);
+}

@@ -183,7 +183,8 @@ void myfind(char *path, struct ast *ast, struct opts_t options)
     else
     {
         ls(path, ast, options);
-        // evaluate(ast, NULL, NULL) for exec \+
+        struct params params = { NULL, NULL, NULL, NULL, 0 };
+        evaluate(ast, &params); // for exec \+
     }
 }
 
