@@ -154,13 +154,13 @@ int evaluate(struct ast *ast, struct params *params)
     switch (ast->token->type)
     {
     case OR:
-        return (evaluate(ast->left, params) || evaluate(ast->right, params));
+        return evaluate(ast->left, params) || evaluate(ast->right, params);
         break;
     case AND:
-        return (evaluate(ast->left, params) && evaluate(ast->right, params));
+        return evaluate(ast->left, params) && evaluate(ast->right, params);
         break;
     case NOT:
-        return !evaluate(ast->right, params);
+        return !(evaluate(ast->right, params));
         break;
     default:
         for (size_t i = 0; i < len; i++)

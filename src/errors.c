@@ -44,3 +44,12 @@ void error_exit(enum error_type type, char *error)
     }
     exit(EXIT_FAILURE);
 }
+
+void exec_error(void)
+{
+    fprintf(
+        stderr,
+        "./myfind: Only one instance of {} is supported with -exec...\n"
+        );
+    exit(EXIT_FAILURE);
+}

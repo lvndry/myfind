@@ -85,7 +85,7 @@ int executeplus(struct params *params)
     static int nfiles = 0;
     static char **execvalue = NULL;
 
-    if (params->filename == NULL)
+    if (params->pathname == NULL)
     {
         // exec all
         char **args = xmalloc(sizeof(char *) * (nfiles + 10));

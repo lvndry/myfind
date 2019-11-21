@@ -56,3 +56,6 @@ check foo -exec "pwd" ";" -exec "echo" "--" "{}" "--" ";"
 check foo -exec "echo" "ok" ";"
 check foo -execdir "echo" "--" "{}" "--" ";"
 check foo -execdir "echo" "--" "{}" "--" "+"
+check \! \( -name bar -o -name foo \) -type d
+check -execdir pwd \; -execdir echo -- {} -- \;
+check -exec echo {} \+

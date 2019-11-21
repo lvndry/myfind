@@ -104,17 +104,15 @@ struct token parse_exec(char *argv[], int *cursor)
     if (value == NULL)
        func_failure("malloc fail");
 
+    int count = 0;
     int i;
     *cursor += 1;
 
-    for (
-        i = 0;
-        argv[*cursor + i] != NULL
-        && (argv[*cursor + i][0] != ';')
-        && (argv[*cursor + i][0] != '+');
-        i++
-    )
+    for (i = 0; argv[*cursor + i] != NULL && (argv[*cursor + i][0] != ';')
+        && (argv[*cursor + i][0] != '+'); i++)
     {
+        if (argv[*cursor + i][0] == '{' && argv[*cursor + i][1] == '}')
+            count++;
         value[i] = argv[*cursor + i];
     }
 
@@ -129,6 +127,9 @@ struct token parse_exec(char *argv[], int *cursor)
     {
         if (argv[*cursor + i - 1][0] != '{' || argv[*cursor + i - 1][1] != '}')
             error_exit(MISS_ARG, "-exec+");
+
+        if (count > 1)
+            exec_error();
 
         token.type = EXECPLUS;
         i++;

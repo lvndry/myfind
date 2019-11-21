@@ -15,5 +15,6 @@ enum error_type
 void func_failure(char *message);
 void error_exit(enum error_type type, char *error);
 void print_error(char *path, char *error);
+void exec_error(void);
 
 #endif

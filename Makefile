@@ -1,6 +1,6 @@
 CC= gcc
-CFLAGS= -Wall -Wextra -Werror -pedantic -std=c99 -g -fsanitize=address
-LDFLAGS= -fsanitize=address
+CFLAGS= -Wall -Wextra -Werror -pedantic -std=c99 -g -fsanitize=address -fsanitize=leak
+LDFLAGS= -fsanitize=address -fsanitize=leak
 VPATH= src
 SRC= actionexp.c ast.c errors.c memory.c myfind.c parse.c parseand.c parseor.c stack.c testexp.c utils.c
 OBJS= $(SRC:.c=.o)

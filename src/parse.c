@@ -152,6 +152,13 @@ struct stack *parse(char *argv[], int start, int end)
                 {
                     if (pushand)
                     {
+                        while (orstack->size > 0 &&
+                            getPrecedence(
+                                orstack->array[orstack->size - 1]->type
+                            )
+                            >= getPrecedence(AND)
+                        )
+                            push_stack(poststack, pop_stack(orstack));
                         struct token *and = create_token(AND, OPERATOR, NULL);
                         push_stack(orstack, and);
                     }
@@ -174,8 +181,7 @@ struct stack *parse(char *argv[], int start, int end)
                         tok.category,
                         tok.value
                     );
-                    while (
-                        orstack->size - 1 >= 0 &&
+                    while (orstack->size > 0 &&
                         getPrecedence(orstack->array[orstack->size - 1]->type)
                         >= getPrecedence(token->type)
                     )
@@ -185,6 +191,7 @@ struct stack *parse(char *argv[], int start, int end)
                 break;
             }
         }
+
         if (i >= len - 1)
         {
             destroy_stack(orstack);
