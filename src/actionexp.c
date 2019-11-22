@@ -36,7 +36,8 @@ int exec_child(char **args, char *template, char *direcory)
     {
         if (direcory != NULL)
             chdir(direcory);
-        execvp(args[0], args);
+        if (execvp(args[0], args) == -1)
+            error_exit(-1, strerror(errno));
         exit(errno);
     }
     else
@@ -54,6 +55,36 @@ int exec_child(char **args, char *template, char *direcory)
 
     if (template != NULL)
         free(template);
+    free(args);
+
+    return 0;
+}
+
+int exec_child_plus(char **args, char **execvalue, int nfiles)
+{
+    pid_t pid = fork();
+    if (pid == -1)
+        error_exit(-1, strerror(errno));
+    else if (pid == 0)
+    {
+        if (execvp(args[0], args) == -1)
+            error_exit(-1, strerror(errno));
+        exit(errno);
+    }
+    else
+    {
+        int status;
+        waitpid(pid, &status, 0);
+        free_execargs(execvalue, nfiles);
+        execvalue = NULL;
+        free(args);
+        if (WIFEXITED(status) == 0)
+            return WEXITSTATUS(status);
+        return 0;
+    }
+
+    free_execargs(execvalue, nfiles);
+    execvalue = NULL;
     free(args);
 
     return 0;
@@ -78,6 +109,14 @@ int executedir(struct params *params)
     return res;
 }
 
+void append_path(char ***execvalue, char *pathname, int *nfiles)
+{
+    execvalue[0] = xrealloc(execvalue, (sizeof(char *) * (*nfiles + 2)));
+    execvalue[0][*nfiles] = xmalloc(strlen(pathname) + 1);
+    strcpy(execvalue[0][*nfiles], pathname);
+    *nfiles += 1;
+}
+
 // Here I suppose that the exec + is correctly parsed and that
 // I only have to replace the last {} by the list of files
 int executeplus(struct params *params)
@@ -87,40 +126,18 @@ int executeplus(struct params *params)
 
     if (params->pathname == NULL)
     {
-        // exec all
-        char **args = xmalloc(sizeof(char *) * (nfiles + 10));
+        char **args = xmalloc(
+            sizeof(char *) *
+            (nfiles + sizeof(execvalue) + 100));
 
         int i = 0;
-        while (strcmp(params->argv[i], "{}") != 0)
-        {
+        for (i = 0; strcmp(params->argv[i], "{}") != 0; ++i)
             args[i] = params->argv[i];
-            i++;
-        }
 
         memcpy(args + i, execvalue, sizeof(char *) * nfiles);
+        args[i + nfiles] = NULL;
 
-        pid_t pid = fork();
-        if (pid == -1)
-            error_exit(-1, strerror(errno));
-        else if (pid == 0)
-        {
-            execvp(args[0], args);
-            exit(errno);
-        }
-        else
-        {
-            int status;
-            waitpid(pid, &status, 0);
-            free_execargs(execvalue, nfiles);
-            execvalue = NULL;
-            free(args);
-            if (WIFEXITED(status) == 0)
-                return WEXITSTATUS(status);
-            return 0;
-        }
-
-        free_execargs(execvalue, nfiles);
-        free(args);
+        return exec_child_plus(args, execvalue, nfiles);
     }
     else
     {

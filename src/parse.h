@@ -13,7 +13,7 @@ enum token_category
 {
     OPERATOR, // -a, -o, !, (, )
     TEST, // -name, -type, -perm, -newer, -user, -group
-    ACTION, // -exec. -exedir, -delete, -print
+    ACTION, // -exec, -exedir, -delete, -print
 };
 
 enum token_type

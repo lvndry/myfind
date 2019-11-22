@@ -22,7 +22,8 @@ void inorder(struct ast *node)
     }
 }
 
-struct expression expressions[] = {
+struct expression expressions[] =
+{
     // tests
     {
         .type = NAME,
@@ -151,6 +152,9 @@ int evaluate(struct ast *ast, struct params *params)
 
     size_t len = sizeof(expressions) / sizeof(expressions[0]);
 
+    if (ast->token->category == ACTION)
+        params->shouldprint = 0;
+
     switch (ast->token->type)
     {
     case OR:
@@ -163,7 +167,7 @@ int evaluate(struct ast *ast, struct params *params)
         return !(evaluate(ast->right, params));
         break;
     default:
-        for (size_t i = 0; i < len; i++)
+        for (size_t i = 0; i < len; ++i)
         {
             if (ast->token->type == expressions[i].type)
             {
@@ -171,8 +175,6 @@ int evaluate(struct ast *ast, struct params *params)
                     return 0;
                 if (ast->token->category == ACTION)
                     params->shouldprint = 0;
-                else
-                    params->shouldprint = 1;
                 params->argv = ast->token->value;
                 return expressions[i].function(params);
             }

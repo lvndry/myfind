@@ -59,3 +59,7 @@ check foo -execdir "echo" "--" "{}" "--" "+"
 check \! \( -name bar -o -name foo \) -type d
 check -execdir pwd \; -execdir echo -- {} -- \;
 check -exec echo {} \+
+check -name bar -o -exec echo {} \;
+check -name bar -a -exec echo {} \;
+check -name bar -o -exec echo {} \+
+check -name bar -a -exec echo {} \+

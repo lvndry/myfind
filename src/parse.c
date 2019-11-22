@@ -13,7 +13,8 @@
 
 #define SIZE 100
 
-struct parser parse_table[] = {
+struct parser parse_table[] =
+{
     // tests
     {"-name", parse_name},
     {"-type", parse_type},
@@ -152,8 +153,8 @@ struct stack *parse(char *argv[], int start, int end)
                 {
                     if (pushand)
                     {
-                        while (orstack->size > 0 &&
-                            getPrecedence(
+                        while (orstack->size > 0
+                            && getPrecedence(
                                 orstack->array[orstack->size - 1]->type
                             )
                             >= getPrecedence(AND)
@@ -168,7 +169,7 @@ struct stack *parse(char *argv[], int start, int end)
                         tok.type,
                         tok.category,
                         tok.value
-                    );
+                        );
                     push_stack(poststack, token);
                     pushand = true;
                 }
@@ -180,9 +181,9 @@ struct stack *parse(char *argv[], int start, int end)
                         tok.type,
                         tok.category,
                         tok.value
-                    );
-                    while (orstack->size > 0 &&
-                        getPrecedence(orstack->array[orstack->size - 1]->type)
+                        );
+                    while (orstack->size > 0
+                    && getPrecedence(orstack->array[orstack->size - 1]->type)
                         >= getPrecedence(token->type)
                     )
                         push_stack(poststack, pop_stack(orstack));

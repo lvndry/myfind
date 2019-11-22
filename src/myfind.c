@@ -94,7 +94,7 @@ void setparams(
 {
     params->pathname = pathname;
     params->filename = filename;
-    params->shouldprint = 0;
+    params->shouldprint = 1;
 }
 
 int print_evaluate(struct ast *ast, char *pathname, char *filename)

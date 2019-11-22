@@ -13,7 +13,7 @@ struct token parse_and(char *argv[], int *cursor)
         error_exit(
             INV_ARG,
             "you have used a binary operator '-a' with nothing before it."
-        );
+            );
     }
     if (argv[*cursor + 1] == NULL || argv[*cursor + 1][0] != '-')
         error_exit(PATH, argv[*cursor]);
@@ -28,7 +28,7 @@ struct token parse_or(char *argv[], int *cursor)
         error_exit(
             INV_ARG,
             "you have used a binary operator '-o' with nothing before it."
-        );
+            );
     }
     if (argv[*cursor + 1] == NULL || argv[*cursor + 1][0] != '-')
         error_exit(PATH, argv[*cursor]);
