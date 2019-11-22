@@ -3,7 +3,7 @@
 
 int islink(const char *path);
 int remove_ds(char *path);
-int isNumeric(const char *str);
+int isChmod(const char *str);
 char *create_template(
     char *template,
     char *arg,

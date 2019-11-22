@@ -28,16 +28,16 @@ int remove_ds(char *path)
 }
 
 // numerical
-int isNumeric(const char *str)
+int isChmod(const char *str)
 {
     size_t len = strlen(str);
 
-    if (len == 0 || str == NULL || *str == '\0' || isspace(*str))
+    if (str == NULL || len == 0 || len > 4 || *str == '\0' || isspace(*str))
       return 0;
 
     for (size_t i = 0; i < len; ++i)
     {
-        if(str[i] < '0' || str[i] > '9')
+        if(str[i] < '0' || str[i] > '7')
             return 0;
     }
 

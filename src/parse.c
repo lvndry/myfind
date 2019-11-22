@@ -105,11 +105,7 @@ struct token *create_token(
     token->type = type;
     token->category = category;
     if (value == NULL)
-    {
-        value = xmalloc(sizeof(char *) * 20);
-        if (value == NULL)
-            func_failure("malloc fail");
-    }
+        value = xmalloc(sizeof(char *) * 50);
 
     token->value = value;
     return token;

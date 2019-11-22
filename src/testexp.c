@@ -131,14 +131,14 @@ int has_perm(struct params *params)
     if (params->argv[0][0] == '-')
     {
         sscanf(params->argv[0], "-%o", &filemode);
-        return (filemode & statchmod) == statchmod;
+        return (filemode & statchmod) == filemode;
     }
     else if (params->argv[0][0] == '/')
     {
         sscanf(params->argv[0], "/%o", &filemode);
         return (filemode & statchmod) != 0;
     }
-    else if (isNumeric(params->argv[0]))
+    else if (isChmod(params->argv[0]))
     {
         sscanf(params->argv[0], "%o", &filemode);
         return filemode == statchmod;

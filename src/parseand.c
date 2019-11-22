@@ -101,11 +101,9 @@ struct token parse_delete(char *argv[], int *cursor)
 struct token parse_exec(char *argv[], int *cursor)
 {
     char **value = xmalloc(VALUE_SIZE * sizeof(char *) * 500);
-    if (value == NULL)
-       func_failure("malloc fail");
-
     int count = 0;
     int i;
+
     *cursor += 1;
 
     for (i = 0; argv[*cursor + i] != NULL && (argv[*cursor + i][0] != ';')
@@ -146,8 +144,6 @@ struct token parse_exec(char *argv[], int *cursor)
 struct token parse_execdir(char *argv[], int *cursor)
 {
     char **value = xmalloc(VALUE_SIZE * sizeof(char *) * 500);
-    if (value == NULL)
-       func_failure("malloc fail");
 
     int i;
     *cursor += 1;

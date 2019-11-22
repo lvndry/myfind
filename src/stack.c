@@ -8,8 +8,6 @@
 struct stack *create_stack(void)
 {
     struct stack *stack = xmalloc(sizeof(struct stack));
-    if (stack == NULL)
-        func_failure("malloc fail");
 
     stack->capcity = CAPACITY;
     stack->size = 0;
@@ -91,9 +89,6 @@ void destroy_astack(struct stack_ast *stack)
 struct stack_ast *create_astack(void)
 {
     struct stack_ast *stack = xmalloc(sizeof(struct stack_ast));
-
-    if (stack == NULL)
-        func_failure("malloc fail");
 
     stack->capcity = CAPACITY;
     stack->size = 0;

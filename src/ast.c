@@ -108,14 +108,23 @@ int isParent(enum token_type type)
     return 0;
 }
 
+struct ast *create_parent(struct stack_ast *astack, struct token *token)
+{
+    struct ast *parent = create_node(token);
+    struct ast *right = pop_astack(astack);
+    struct ast *left = pop_astack(astack);
+    parent->left = left;
+    parent->right = right;
+
+    return parent;
+}
+
 struct ast *constructTree(struct stack *postfix)
 {
     if (postfix == NULL)
         return NULL;
 
     struct ast *parent;
-    struct ast *right;
-    struct ast *left;
     struct stack_ast *astack = create_astack();
     int i = 0;
 
@@ -124,13 +133,7 @@ struct ast *constructTree(struct stack *postfix)
         if (!isParent(postfix->array[i]->type))
             parent = create_node(postfix->array[i]);
         else
-        {
-            parent = create_node(postfix->array[i]);
-            right = pop_astack(astack);
-            left = pop_astack(astack);
-            parent->left = left;
-            parent->right = right;
-        }
+            parent = create_parent(astack, postfix->array[i]);
 
         push_astack(astack, parent);
         i++;
