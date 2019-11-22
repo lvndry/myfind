@@ -29,12 +29,12 @@ int is_newer(struct params *params)
 {
     struct stat statbuff;
 
-    if (lstat(params->argv[0], &statbuff) == -1)
-        error_exit(-1, strerror(errno));
-    struct timespec timearg = statbuff.st_mtim;
     if(lstat(params->pathname, &statbuff) == -1)
         error_exit(-1, strerror(errno));
     struct timespec timepath = statbuff.st_mtim;
+    if (lstat(params->argv[0], &statbuff) == -1)
+        error_exit(-1, strerror(errno));
+    struct timespec timearg = statbuff.st_mtim;
 
     if (timepath.tv_sec == timearg.tv_sec)
         return timepath.tv_nsec > timearg.tv_nsec;

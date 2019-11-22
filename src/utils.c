@@ -81,7 +81,6 @@ char **build_args(char **argv, char **template, char *pathname, int exdir)
         }
 
         *template = xmalloc(sizeof(fc - arg) + 1);
-
         strncpy(*template, arg, fc - arg);
         template[0][fc - arg] = '\0';
 

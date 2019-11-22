@@ -27,35 +27,51 @@ int rm(struct params *params)
     return 0;
 }
 
+void free_args(char **args, char *template)
+{
+    if (template != NULL)
+        free(template);
+    free(args);
+}
+
+void free_args_plus(char **args, char **execvalue, int nfiles)
+{
+    free_execargs(execvalue, nfiles);
+    execvalue = NULL;
+    free(args);
+}
+
 int exec_child(char **args, char *template, char *direcory)
 {
     pid_t pid = fork();
     if (pid == -1)
+    {
+        free_args(args, template);
         error_exit(-1, strerror(errno));
+    }
     else if (pid == 0)
     {
         if (direcory != NULL)
             chdir(direcory);
         if (execvp(args[0], args) == -1)
+        {
+            free_args(args, template);
             error_exit(-1, strerror(errno));
+        }
         exit(errno);
     }
     else
     {
         int status;
         waitpid(pid, &status, 0);
-        if (template != NULL)
-            free(template);
-        free(args);
+        free_args(args, template);
         if (WIFEXITED(status))
             return !WEXITSTATUS(status);
         print_error("execvp", strerror(errno));
         return status;
     }
 
-    if (template != NULL)
-        free(template);
-    free(args);
+    free_args(args, template);
 
     return 0;
 }
@@ -64,28 +80,30 @@ int exec_child_plus(char **args, char **execvalue, int nfiles)
 {
     pid_t pid = fork();
     if (pid == -1)
+    {
+        free_args_plus(args, execvalue, nfiles);
         error_exit(-1, strerror(errno));
+    }
     else if (pid == 0)
     {
         if (execvp(args[0], args) == -1)
+        {
+            free_args_plus(args, execvalue, nfiles);
             error_exit(-1, strerror(errno));
+        }
         exit(errno);
     }
     else
     {
         int status;
         waitpid(pid, &status, 0);
-        free_execargs(execvalue, nfiles);
-        execvalue = NULL;
-        free(args);
+        free_args_plus(args, execvalue, nfiles);
         if (WIFEXITED(status) == 0)
-            return WEXITSTATUS(status);
+            return !WEXITSTATUS(status);
         return 0;
     }
 
-    free_execargs(execvalue, nfiles);
-    execvalue = NULL;
-    free(args);
+    free_args_plus(args, execvalue, nfiles);
 
     return 0;
 }
@@ -107,14 +125,6 @@ int executedir(struct params *params)
     int res = exec_child(args, template, directory);
     free(dup);
     return res;
-}
-
-void append_path(char ***execvalue, char *pathname, int *nfiles)
-{
-    execvalue[0] = xrealloc(execvalue, (sizeof(char *) * (*nfiles + 2)));
-    execvalue[0][*nfiles] = xmalloc(strlen(pathname) + 1);
-    strcpy(execvalue[0][*nfiles], pathname);
-    *nfiles += 1;
 }
 
 // Here I suppose that the exec + is correctly parsed and that
