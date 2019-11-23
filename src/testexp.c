@@ -124,8 +124,11 @@ int has_perm(struct params *params)
 
     if (params->argv[0][0] == '-')
     {
-        sscanf(params->argv[0], "-%o", &filemode);
-        return (filemode & statchmod) == filemode;
+        char *arg = params->argv[0];
+        arg += 1;
+        int octal = atoi(arg);
+        unsigned decnum = octalToDecimal(octal);
+        return (statchmod & decnum) == decnum;
     }
     else if (params->argv[0][0] == '/')
     {

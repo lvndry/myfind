@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <math.h>
 #include <stdio.h>
 
 #include "errors.h"
@@ -104,4 +105,19 @@ char **build_args(char **argv, char **template, char *pathname, int exdir)
 
      args[i] = NULL;
      return args;
+}
+
+long long octalToDecimal(int octal)
+{
+    int dec = 0;
+    int i = 0;
+
+    while (octal != 0)
+    {
+        dec += (octal % 10) * pow(8, i);
+        ++i;
+        octal /= 10;
+    }
+
+    return dec;
 }
