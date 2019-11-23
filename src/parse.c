@@ -42,31 +42,6 @@ struct parser parse_table[] =
     {"NOT", parse_not},
 };
 
-/* TO DELETE */
-void print_stacks(struct stack *stack)
-{
-    struct token *t;
-
-    for (int i = 0; i < stack->size; i++)
-    {
-        t = stack->array[i];
-        if (t->type == AND)
-            printf("AND ");
-        else if (t->type == OR)
-            printf("OR ");
-        else if (t->type == NOT)
-            printf("! ");
-        else if (t->type == PAREN_O)
-            printf("( ");
-        else if (t->type == PAREN_C)
-            printf(") ");
-        else if (t->type == PRINT)
-            printf("print ");
-        else
-            printf("%s ", t->value[0]);
-    }
-}
-
 int getPrecedence(enum token_type type)
 {
     if (type == PAREN_O)
@@ -79,7 +54,7 @@ int getPrecedence(enum token_type type)
         return 3;
     else if (type == NOT)
         return 4;
-    return 0; // Should return error
+    return 0;
 }
 
 int isOperator(const char *op)
@@ -125,7 +100,7 @@ struct stack *parse(char *argv[], int start, int end)
     while (cursor < end)
     {
         int i = 0;
-        for (i = 0; i < len; ++i)
+        for (i = 0; i < len; i++)
         {
             if (strcmp(parse_table[i].value, argv[cursor]) == 0)
             {

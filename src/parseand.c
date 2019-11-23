@@ -78,7 +78,6 @@ struct token parse_user(char *argv[], int *cursor)
 }
 
 // actions functions
-
 struct token parse_print(char *argv[], int *cursor)
 {
     if (argv[*cursor + 1] != NULL && argv[*cursor + 1][0] != '-')

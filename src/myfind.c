@@ -37,7 +37,7 @@ void setoptsval(struct opts_t *options, struct opts_t newops)
 
 int setOptions(struct opts_t *options, char *argv[], int start, int end)
 {
-    for (int i = start; i < end; ++i)
+    for (int i = start; i < end; i++)
     {
         if (argv[i][0] != '-')
             return i - 1;
@@ -94,7 +94,7 @@ void setparams(
 {
     params->pathname = pathname;
     params->filename = filename;
-    params->shouldprint = 1;
+    params->shouldprint = 0;
 }
 
 int print_evaluate(struct ast *ast, char *pathname, char *filename)
@@ -117,7 +117,7 @@ int print_evaluate(struct ast *ast, char *pathname, char *filename)
 
 int print_file(char *path, struct ast *ast, struct opts_t options)
 {
-    int res = 0;
+    int res = 1;
     if (access(path, F_OK) == -1)
         print_error(path, strerror(errno));
     else if(access(path, R_OK) == -1)

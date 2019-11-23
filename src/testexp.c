@@ -18,12 +18,6 @@
 #include "utils.h"
 #include "stack.h"
 
-int print(struct params *params)
-{
-    printf("%s\n", params->pathname);
-    return 1;
-}
-
 // test functions
 int is_newer(struct params *params)
 {

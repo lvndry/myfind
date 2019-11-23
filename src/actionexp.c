@@ -20,6 +20,12 @@
 #include "stack.h"
 
 // actions functions
+int print(struct params *params)
+{
+    printf("%s\n", params->pathname);
+    return 1;
+}
+
 int rm(struct params *params)
 {
     if (remove(params->pathname) == 0)
@@ -58,7 +64,6 @@ int exec_child(char **args, char *template, char *direcory)
             free_args(args, template);
             error_exit(-1, strerror(errno));
         }
-        exit(errno);
     }
     else
     {
@@ -91,7 +96,6 @@ int exec_child_plus(char **args, char **execvalue, int nfiles)
             free_args_plus(args, execvalue, nfiles);
             error_exit(-1, strerror(errno));
         }
-        exit(errno);
     }
     else
     {
@@ -141,7 +145,7 @@ int executeplus(struct params *params)
             (nfiles + sizeof(execvalue) + 100));
 
         int i = 0;
-        for (i = 0; strcmp(params->argv[i], "{}") != 0; ++i)
+        for (i = 0; strcmp(params->argv[i], "{}") != 0; i++)
             args[i] = params->argv[i];
 
         memcpy(args + i, execvalue, sizeof(char *) * nfiles);

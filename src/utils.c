@@ -35,7 +35,7 @@ int isChmod(const char *str)
     if (str == NULL || len == 0 || len > 4 || *str == '\0' || isspace(*str))
       return 0;
 
-    for (size_t i = 0; i < len; ++i)
+    for (size_t i = 0; i < len; i++)
     {
         if(str[i] < '0' || str[i] > '7')
             return 0;
@@ -70,7 +70,7 @@ char **build_args(char **argv, char **template, char *pathname, int exdir)
     int i = 0;
     char **args = xmalloc(sizeof(char *) * 2000);
 
-    for (i = 0; argv[i] != NULL; ++i)
+    for (i = 0; argv[i] != NULL; i++)
     {
         char *arg = argv[i];
         char *fc = strstr(arg, "{}");
