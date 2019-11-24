@@ -69,7 +69,6 @@ void getFilename(char *filename, char *path, char *d_name)
 char **build_args(char **argv, char *pathname, int exdir)
 {
     int i = 0;
-    char *template = NULL;
     char **args = xmalloc(sizeof(char *) * 2000);
 
     for (i = 0; argv[i] != NULL; i++)
@@ -82,7 +81,7 @@ char **build_args(char **argv, char *pathname, int exdir)
             continue;
         }
 
-        template = xmalloc(sizeof(fc - arg) + 1);
+        char *template = xmalloc(sizeof(fc - arg) + 1);
         strncpy(template, arg, fc - arg);
         template[fc - arg] = '\0';
 
