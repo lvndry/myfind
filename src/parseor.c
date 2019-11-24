@@ -39,18 +39,16 @@ struct token parse_or(char *argv[], int *cursor)
 
 struct token parse_oparen(char *argv[], int *cursor)
 {
-    argv = argv;
-    cursor = cursor;
-
+    if (argv[*cursor + 1][0] == ')' || isOperator(argv[*cursor + 1]))
+        error_exit(MISS_ARG, "(");
     struct token token = { PAREN_O, OPERATOR, NULL };
     return token;
 }
 
 struct token parse_cparen(char *argv[], int *cursor)
 {
-    argv = argv;
-    cursor = cursor;
-
+    if (argv[*cursor - 1][0] == '(' || isOperator(argv[*cursor - 1]))
+        error_exit(MISS_ARG, ")");
     struct token token = { PAREN_C, OPERATOR, NULL };
     return token;
 }

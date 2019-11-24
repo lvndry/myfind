@@ -31,15 +31,13 @@ struct parser parse_table[] =
 
     // operators
     {"-o", parse_or},
-    {"or", parse_or},
-    {"OR", parse_or},
+    {"-or", parse_or},
     {"-a", parse_and},
-    {"and", parse_and},
-    {"AND", parse_and},
+    {"-and", parse_and},
     {"(", parse_oparen},
     {")", parse_cparen},
     {"!", parse_not},
-    {"NOT", parse_not},
+    {"-not", parse_not},
 };
 
 int getPrecedence(enum token_type type)
@@ -61,10 +59,11 @@ int isOperator(const char *op)
 {
     if (
         strcmp("-o", op) == 0
-        || strcmp("or", op) == 0
+        || strcmp("-or", op) == 0
         || strcmp("-a", op) == 0
-        || strcmp("and", op) == 0
+        || strcmp("-and", op) == 0
         || strcmp("!", op) == 0
+        || strcmp("-not", op) == 0
     )
         return 1;
     return 0;
@@ -100,17 +99,19 @@ struct stack *parse(char *argv[], int start, int end)
     while (cursor < end)
     {
         int i = 0;
-        for (i = 0; i < len; i++)
+        for (i = 0; i < len; ++i)
         {
             if (strcmp(parse_table[i].value, argv[cursor]) == 0)
             {
                 if (strcmp(argv[cursor], "(") == 0)
                 {
+                    parse_oparen(argv, &cursor);
                     struct token *token = create_token(PAREN_O, OPERATOR, NULL);
                     push_stack(orstack, token);
                 }
                 else if (strcmp(argv[cursor], ")") == 0)
                 {
+                    parse_cparen(argv, &cursor);
                     while (
                         orstack->size > 0
                         && orstack->array[orstack->size - 1]->type != PAREN_O
@@ -164,14 +165,16 @@ struct stack *parse(char *argv[], int start, int end)
             }
         }
 
-        if (i >= len - 1)
+        if (i == len)
         {
             destroy_stack(orstack);
             destroy_stack(poststack);
             error_exit(UNKN_PRED, argv[cursor]);
         }
+
         cursor++;
     }
+
     while (orstack->size > 0)
         push_stack(poststack, pop_stack(orstack));
 

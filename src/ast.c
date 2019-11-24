@@ -170,7 +170,7 @@ int evaluate(struct ast *ast, struct params *params)
                 return expressions[i].function(params);
             }
         }
-        func_failure("./myfind  Invalid expression");
+        func_failure("./myfind Invalid expression");
     break;
     }
     return 0;

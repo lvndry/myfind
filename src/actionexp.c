@@ -68,7 +68,11 @@ int exec_child(char **args, char *template, char *direcory)
     else
     {
         int status;
-        waitpid(pid, &status, 0);
+        if (waitpid(pid, &status, 0) == -1)
+        {
+            free_args(args, template);
+            error_exit(-1, strerror(errno));
+        }
         free_args(args, template);
         if (WIFEXITED(status))
             return !WEXITSTATUS(status);
@@ -100,7 +104,11 @@ int exec_child_plus(char **args, char **execvalue, int nfiles)
     else
     {
         int status;
-        waitpid(pid, &status, 0);
+        if (waitpid(pid, &status, 0) == -1)
+        {
+            free_args_plus(args, execvalue, nfiles);
+            error_exit(-1, strerror(errno));
+        }
         free_args_plus(args, execvalue, nfiles);
         if (WIFEXITED(status) == 0)
             return !WEXITSTATUS(status);

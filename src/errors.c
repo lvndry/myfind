@@ -21,10 +21,10 @@ void error_exit(enum error_type type, char *error)
     switch (type)
     {
     case MISS_ARG:
-        fprintf(stderr, "./myfind: Missing argument to `%s\n", error);
+        fprintf(stderr, "./myfind: Missing argument to `%s'\n", error);
         break;
     case UNKN_PRED:
-        fprintf(stderr, "./myfind: Unkown predicate `%s\n", error);
+        fprintf(stderr, "./myfind: Unkown predicate `%s'\n", error);
         break;
     case UNKN_ARG:
         fprintf(stderr, "./myfind: Unknown argument to %s\n", error);

@@ -55,6 +55,6 @@ struct token *create_token(
 );
 
 struct stack *parse(char *argv[], int start, int end);
-int isOperand(const char *op);
+int isOperator(const char *op);
 
 #endif
