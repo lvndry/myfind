@@ -1,5 +1,6 @@
 #define _DEFAULT_SOURCE
 #include <errno.h>
+#include <err.h>
 #include <fcntl.h>
 #include <fnmatch.h>
 #include <grp.h>
@@ -63,8 +64,9 @@ int exec_child(char **args, char *template, char *direcory)
         if (execvp(args[0], args) == -1)
         {
             free_args(args, template);
-            func_failure(strerror(errno));
+            errx(0, "myfind: %s", strerror(errno));
         }
+        exit(0);
     }
     else
     {
@@ -72,7 +74,7 @@ int exec_child(char **args, char *template, char *direcory)
         if (waitpid(pid, &status, 0) == -1)
         {
             free_args(args, template);
-            func_failure(strerror(errno));
+            err(0, "myfind: %s", strerror(errno));
         }
         free_args(args, template);
         if (WIFEXITED(status))
@@ -91,15 +93,16 @@ int exec_child_plus(char **args, char **execvalue, int nfiles)
     if (pid == -1)
     {
         free_args_plus(args, execvalue, nfiles);
-        func_failure(strerror(errno));
+        errx(0, "myfind: %s", strerror(errno));
     }
     else if (pid == 0)
     {
         if (execvp(args[0], args) == -1)
         {
             free_args_plus(args, execvalue, nfiles);
-            func_failure(strerror(errno));
+            errx(0, "myfind: %s", strerror(errno));
         }
+        exit(0);
     }
     else
     {
