@@ -86,11 +86,7 @@ void getStat(char *filename, struct stat *statbuff, struct opts_t options)
         lstat(filename, statbuff);
 }
 
-void setparams(
-    struct params *params,
-    char *pathname,
-    char *filename
-)
+void setparams(struct params *params, char *pathname, char *filename)
 {
     params->pathname = pathname;
     params->filename = filename;
@@ -119,7 +115,7 @@ int print_file(char *path, struct ast *ast, struct opts_t options)
 {
     int res = 1;
     if (access(path, F_OK) == -1)
-        print_error(path, strerror(errno));
+        error_exit(-1, strerror(errno));
     else if(access(path, R_OK) == -1)
     {
         if (!options.d)

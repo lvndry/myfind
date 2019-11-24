@@ -111,7 +111,6 @@ struct stack *parse(char *argv[], int start, int end)
                 }
                 else if (strcmp(argv[cursor], ")") == 0)
                 {
-                    parse_cparen(argv, &cursor);
                     while (
                         orstack->size > 0
                         && orstack->array[orstack->size - 1]->type != PAREN_O
@@ -176,7 +175,14 @@ struct stack *parse(char *argv[], int start, int end)
     }
 
     while (orstack->size > 0)
+    {
+        if (
+            orstack->array[orstack->size - 1]->type == PAREN_O
+            || orstack->array[orstack->size - 1]->type == PAREN_C
+        )
+            func_failure("Invalid expression near parentheses");
         push_stack(poststack, pop_stack(orstack));
+    }
 
     destroy_stack(orstack);
     poststack->array[poststack->size] = NULL;

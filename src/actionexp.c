@@ -30,6 +30,7 @@ int rm(struct params *params)
 {
     if (remove(params->pathname) == 0)
         return 1;
+    fprintf(stderr, "%s\n", strerror(errno));
     return 0;
 }
 
@@ -53,7 +54,7 @@ int exec_child(char **args, char *template, char *direcory)
     if (pid == -1)
     {
         free_args(args, template);
-        error_exit(-1, strerror(errno));
+        func_failure(strerror(errno));
     }
     else if (pid == 0)
     {
@@ -62,7 +63,7 @@ int exec_child(char **args, char *template, char *direcory)
         if (execvp(args[0], args) == -1)
         {
             free_args(args, template);
-            error_exit(-1, strerror(errno));
+            func_failure(strerror(errno));
         }
     }
     else
@@ -71,13 +72,12 @@ int exec_child(char **args, char *template, char *direcory)
         if (waitpid(pid, &status, 0) == -1)
         {
             free_args(args, template);
-            error_exit(-1, strerror(errno));
+            func_failure(strerror(errno));
         }
         free_args(args, template);
         if (WIFEXITED(status))
             return !WEXITSTATUS(status);
-        print_error("execvp", strerror(errno));
-        return status;
+        return 0;
     }
 
     free_args(args, template);
@@ -91,14 +91,14 @@ int exec_child_plus(char **args, char **execvalue, int nfiles)
     if (pid == -1)
     {
         free_args_plus(args, execvalue, nfiles);
-        error_exit(-1, strerror(errno));
+        func_failure(strerror(errno));
     }
     else if (pid == 0)
     {
         if (execvp(args[0], args) == -1)
         {
             free_args_plus(args, execvalue, nfiles);
-            error_exit(-1, strerror(errno));
+            func_failure(strerror(errno));
         }
     }
     else
@@ -107,10 +107,10 @@ int exec_child_plus(char **args, char **execvalue, int nfiles)
         if (waitpid(pid, &status, 0) == -1)
         {
             free_args_plus(args, execvalue, nfiles);
-            error_exit(-1, strerror(errno));
+            func_failure(strerror(errno));
         }
         free_args_plus(args, execvalue, nfiles);
-        if (WIFEXITED(status) == 0)
+        if (WIFEXITED(status))
             return !WEXITSTATUS(status);
         return 0;
     }

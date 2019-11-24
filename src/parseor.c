@@ -1,3 +1,4 @@
+#include <string.h>
 #include <stdlib.h>
 
 #include "memory.h"
@@ -5,6 +6,17 @@
 #include "errors.h"
 
 // Operators functions
+int isAllowedAfter(const char *op)
+{
+    if (
+        strcmp(op, "-o") == 0
+        || strcmp(op, "-a") == 0
+        || ((op[0] != '-' && op[0] != '!')
+        && (op[0] != '-' && op[0] != '('))
+    )
+        return 0;
+    return 1;
+}
 
 struct token parse_and(char *argv[], int *cursor)
 {
@@ -15,7 +27,7 @@ struct token parse_and(char *argv[], int *cursor)
             "you have used a binary operator '-a' with nothing before it."
             );
     }
-    if (argv[*cursor + 1] == NULL || argv[*cursor + 1][0] != '-')
+    if (argv[*cursor + 1] == NULL || !isAllowedAfter(argv[*cursor + 1]))
         error_exit(PATH, argv[*cursor]);
     struct token token = { AND, OPERATOR, NULL };
     return token;
@@ -30,7 +42,7 @@ struct token parse_or(char *argv[], int *cursor)
             "you have used a binary operator '-o' with nothing before it."
             );
     }
-    if (argv[*cursor + 1] == NULL || argv[*cursor + 1][0] != '-')
+    if (argv[*cursor + 1] == NULL || !isAllowedAfter(argv[*cursor + 1]))
         error_exit(PATH, argv[*cursor]);
 
     struct token token = { OR, OPERATOR, NULL };
@@ -39,7 +51,7 @@ struct token parse_or(char *argv[], int *cursor)
 
 struct token parse_oparen(char *argv[], int *cursor)
 {
-    if (argv[*cursor + 1][0] == ')' || isOperator(argv[*cursor + 1]))
+    if (argv[*cursor + 1][0] == ')' || !isAllowedAfter(argv[*cursor + 1]))
         error_exit(MISS_ARG, "(");
     struct token token = { PAREN_O, OPERATOR, NULL };
     return token;
@@ -47,7 +59,7 @@ struct token parse_oparen(char *argv[], int *cursor)
 
 struct token parse_cparen(char *argv[], int *cursor)
 {
-    if (argv[*cursor - 1][0] == '(' || isOperator(argv[*cursor - 1]))
+    if (argv[*cursor - 1][0] == '(')
         error_exit(MISS_ARG, ")");
     struct token token = { PAREN_C, OPERATOR, NULL };
     return token;

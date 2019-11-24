@@ -161,7 +161,7 @@ int evaluate(struct ast *ast, struct params *params)
             if (ast->token->type == expressions[i].type)
             {
                 if (params->pathname == NULL && ast->token->type != EXECPLUS)
-                    return 0;
+                    return 1;
                 if (ast->token->category == ACTION)
                     params->shouldprint = 0;
                 else
@@ -170,6 +170,8 @@ int evaluate(struct ast *ast, struct params *params)
                 return expressions[i].function(params);
             }
         }
+        free_ast(ast);
+        ast = NULL;
         func_failure("./myfind Invalid expression");
     break;
     }

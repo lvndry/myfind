@@ -90,6 +90,9 @@ int has_type(struct params *params)
     if(lstat(params->pathname, &statbuff) == -1)
         error_exit(-1, strerror(errno));
 
+    if (strlen(params->argv[0]) > 1)
+         error_exit(UNKN_ARG, "-type");
+
     switch (params->argv[0][0])
     {
     case 'b':
@@ -110,7 +113,7 @@ int has_type(struct params *params)
         error_exit(UNKN_ARG, "-type");
         break;
     }
-    return 1;
+    return 0;
 }
 
 int has_perm(struct params *params)

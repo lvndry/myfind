@@ -113,11 +113,8 @@ struct token parse_exec(char *argv[], int *cursor)
         value[i] = argv[*cursor + i];
     }
 
-    if (i == 0)
+    if (i == 0 || argv[*cursor + i] == NULL)
         error_exit(INV_ARG, "-exec");
-
-    if (argv[*cursor + i] == NULL)
-        error_exit(MISS_ARG, "-exec");
 
     struct token token = { EXEC, ACTION, value };
     if (argv[*cursor + i][0] == '+')

@@ -7,8 +7,7 @@
 
 void func_failure(char *message)
 {
-    perror(message);
-    exit(EXIT_FAILURE);
+    errx(1, "myfind: %s", message);
 }
 
 void print_error(char *path,  char *error)

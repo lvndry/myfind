@@ -71,3 +71,13 @@ check foo -exec "pwd" ";" -exec "echo" "--" "{}" "--" ";"
 check foo -exec "echo" "ok" ";"
 check foo -execdir "echo" "--" "{}" "--" ";"
 check -execdir "pwd" ";" -execdir "echo" "--" "{}" "--" ";"
+check -perm 333 -a \! -print -a -name bar
+check -perm 333 -a \! -print -o -name foo
+check -perm 333 -a \! -print -a aswaf
+check -perm 333 -a \! -print -a -o -name foo
+check -perm 333 -a \! -print -o -o -name foo
+check -perm 333 -a \! -print -o -a -name foo
+check -perm 333 -a \! -print -o -a -a -o -name foo
+check -perm 333 -a -not -print -o -name foo
+check -perm 333 -a \( \! -print -o -name foo \)
+check \( -name \)
