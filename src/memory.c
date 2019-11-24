@@ -12,10 +12,10 @@ void *xmalloc(size_t size)
 
 void *xrealloc(void *ptr, size_t size)
 {
-    ptr = realloc(ptr, size);
-    if (ptr == NULL)
+    void *newptr = realloc(ptr, size);
+    if (newptr == NULL)
         func_failure("realloc fail");
-    return ptr;
+    return newptr;
 }
 
 void free_execargs(char **execvalue, int len)

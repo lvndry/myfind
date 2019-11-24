@@ -57,16 +57,14 @@ int getPrecedence(enum token_type type)
 
 int isOperator(const char *op)
 {
-    if (
+    return (
         strcmp("-o", op) == 0
         || strcmp("-or", op) == 0
         || strcmp("-a", op) == 0
         || strcmp("-and", op) == 0
         || strcmp("!", op) == 0
         || strcmp("-not", op) == 0
-    )
-        return 1;
-    return 0;
+    );
 }
 
 struct token *create_token(

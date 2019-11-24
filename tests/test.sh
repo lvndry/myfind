@@ -1,6 +1,7 @@
 function check
 {
   var="$*"
+  echo "testing $var..."
   ./myfind ${var} > a.log
   find ${var} > b.log
   DIFF=$(diff a.log b.log)
@@ -72,8 +73,7 @@ check foo -exec "echo" "ok" ";"
 check foo -execdir "echo" "--" "{}" "--" ";"
 check -execdir "pwd" ";" -execdir "echo" "--" "{}" "--" ";"
 check -perm 333 -a \! -print -a -name bar
-check -perm 333 -a \! -print -o -name foo
-check -perm 333 -a \! -print -a aswaf
+check -perm 333 -a \! -print -a takwa
 check -perm 333 -a \! -print -a -o -name foo
 check -perm 333 -a \! -print -o -o -name foo
 check -perm 333 -a \! -print -o -a -name foo
@@ -81,3 +81,10 @@ check -perm 333 -a \! -print -o -a -a -o -name foo
 check -perm 333 -a -not -print -o -name foo
 check -perm 333 -a \( \! -print -o -name foo \)
 check \( -name \)
+check -name foo -a -type d -o -name bar -a -type f
+check -perm 333 -a -not -print -a -name foo
+check -perm 333 -a \! -print -o -name foo
+check -perm 333 -a -not -print -o -name foo
+check -perm 333 -a -print -o -name foo
+check -perm 333 -o -not -print -o -name foo
+check -perm 333 -o -not -print -a -name foo

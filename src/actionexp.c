@@ -35,26 +35,32 @@ int rm(struct params *params)
     return 0;
 }
 
-void free_args(char **args, char *template)
+void free_args(char **args)
 {
-    if (template != NULL)
-        free(template);
+    int i = 0;
+    while (args[i] != NULL)
+    {
+        free(args[i]);
+        i++;
+    }
     free(args);
+    args = NULL;
 }
 
 void free_args_plus(char **args, char **execvalue, int nfiles)
 {
     free_execargs(execvalue, nfiles);
-    execvalue = NULL;
     free(args);
+    execvalue = NULL;
+    args = NULL;
 }
 
-int exec_child(char **args, char *template, char *direcory)
+int exec_child(char **args, char *direcory)
 {
     pid_t pid = fork();
     if (pid == -1)
     {
-        free_args(args, template);
+        free_args(args);
         func_failure(strerror(errno));
     }
     else if (pid == 0)
@@ -63,9 +69,10 @@ int exec_child(char **args, char *template, char *direcory)
             chdir(direcory);
         if (execvp(args[0], args) == -1)
         {
-            free_args(args, template);
+            free_args(args);
             errx(0, "myfind: %s", strerror(errno));
         }
+        free_args(args);
         exit(0);
     }
     else
@@ -73,16 +80,16 @@ int exec_child(char **args, char *template, char *direcory)
         int status;
         if (waitpid(pid, &status, 0) == -1)
         {
-            free_args(args, template);
+            free_args(args);
             err(0, "myfind: %s", strerror(errno));
         }
-        free_args(args, template);
+        free_args(args);
         if (WIFEXITED(status))
             return !WEXITSTATUS(status);
         return 0;
     }
 
-    free_args(args, template);
+    free_args(args);
 
     return 0;
 }
@@ -125,19 +132,18 @@ int exec_child_plus(char **args, char **execvalue, int nfiles)
 
 int execute(struct params *params)
 {
-    char *template = NULL;
-    char **args = build_args(params->argv, &template, params->pathname, 0);
-    return exec_child(args, template, NULL);
+    char **args = build_args(params->argv, params->pathname, 0);
+    int res = exec_child(args, NULL);
+    return res;
 }
 
 int executedir(struct params *params)
 {
-    char *template = NULL;
     char *dup = strdup(params->pathname);
     char *filename = basename(params->filename);
     char *directory = dirname(dup);
-    char **args = build_args(params->argv, &template, filename, 1);
-    int res = exec_child(args, template, directory);
+    char **args = build_args(params->argv, filename, 1);
+    int res = exec_child(args, directory);
     free(dup);
     return res;
 }

@@ -57,7 +57,7 @@ void format_path(char *path)
         path[strlen(path) - 1] = '\0';
 }
 
-void getFilename(char *filename, char*path, char *d_name)
+void getFilename(char *filename, char *path, char *d_name)
 {
     if (strcmp(path, "/") == 0)
         sprintf(filename, "%s%s", path, d_name);
@@ -66,9 +66,10 @@ void getFilename(char *filename, char*path, char *d_name)
 }
 
 // args have to be freed at the end of function call
-char **build_args(char **argv, char **template, char *pathname, int exdir)
+char **build_args(char **argv, char *pathname, int exdir)
 {
     int i = 0;
+    char *template = NULL;
     char **args = xmalloc(sizeof(char *) * 2000);
 
     for (i = 0; argv[i] != NULL; i++)
@@ -77,30 +78,31 @@ char **build_args(char **argv, char **template, char *pathname, int exdir)
         char *fc = strstr(arg, "{}");
         if (fc == NULL)
         {
-            args[i] = arg;
+            args[i] = strdup(arg);
             continue;
         }
 
-        *template = xmalloc(sizeof(fc - arg) + 1);
-        strncpy(*template, arg, fc - arg);
-        template[0][fc - arg] = '\0';
+        template = xmalloc(sizeof(fc - arg) + 1);
+        strncpy(template, arg, fc - arg);
+        template[fc - arg] = '\0';
 
         int n = 0;
         while ((arg = strstr(arg, "{}")) != NULL)
         {
-            *template = xrealloc(*template,
-                sizeof(char) * (strlen(*template) + strlen(pathname) + 5));
+            template = xrealloc(template,
+                sizeof(char) * (strlen(template) + strlen(pathname) + 5));
 
             if (exdir)
-                strcat(*template, "./");
+                strcat(template, "./");
 
-            strcat(*template, pathname);
+            strcat(template, pathname);
             arg += 2;
             n += 1;
         }
 
-        strcat(*template, fc + 2 * n);
-        args[i] = *template;
+        strcat(template, fc + 2 * n);
+        args[i] = strdup(template);
+        free(template);
     }
 
      args[i] = NULL;
