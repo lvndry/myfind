@@ -162,10 +162,7 @@ int evaluate(struct ast *ast, struct params *params)
             {
                 if (params->pathname == NULL && ast->token->type != EXECPLUS)
                     return 1;
-                if (ast->token->category == ACTION)
-                    params->shouldprint = 0;
-                else
-                    params->shouldprint = 1;
+                params->shouldprint = !(ast->token->category == ACTION);
                 params->argv = ast->token->value;
                 return expressions[i].function(params);
             }

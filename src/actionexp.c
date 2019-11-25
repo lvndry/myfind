@@ -158,8 +158,8 @@ int executeplus(struct params *params)
     if (params->pathname == NULL)
     {
         char **args = xmalloc(
-            sizeof(char *) *
-            (nfiles + sizeof(execvalue) + 100));
+            sizeof(char *)
+            * (nfiles + sizeof(execvalue) + 100));
 
         int i = 0;
         for (i = 0; strcmp(params->argv[i], "{}") != 0; i++)
