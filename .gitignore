@@ -1,8 +1,6 @@
 *.log
 *.o
-test.c
-cs.c
+*.pdf
 a.out
 myfind
 tmp
-Dockerfile
